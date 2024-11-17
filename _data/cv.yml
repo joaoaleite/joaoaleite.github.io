@@ -68,6 +68,21 @@
         - Semana da Computação is an annual event that brings together students and professionals from many fields of Computer Science.
         - I was a member of the organising committee and responsible for  defining the event's schedule and contacting speakers.
 
+- title: Awards
+  type: time_table
+  contents:
+    - title: EPSRC Doctoral Training Partnership (DTP) Scholarship
+      institution: <a href="https://www.ukri.org/">UK Research and Innovation (UKRI)</a>
+      year: 2022
+      description:
+        - Covers full international tuition fees, living expenses and provides a research support grant.
+
+    - title: Best Paper Award
+      institution: Department of Computer Science, Universidade Federal de São Carlos
+      year: 2021
+      description:
+        - 'My paper "Toxic language detection in social media for Brazilian Portuguese: New dataset and multilingual analysis" was awarded the best paper published in the computer science department in 2021.'
+
 - title: Publications
   contents:
     - For a complete list of publications, please visit my <a href="https://scholar.google.com/citations?user=-OhzTN4AAAAJ&hl=en">Google Scholar</a> profile or the <a href="/publications">publications</a> page.
