@@ -6,7 +6,7 @@ subtitle: PhD Candidate, Research Associate at <a href='https://www.sheffield.ac
 
 profile:
   align: center
-  image: profile.jpg
+  image: profile2.jpg
   image_circular: false
   more_info: |
     <div class="more-info">
