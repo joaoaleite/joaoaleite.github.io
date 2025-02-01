@@ -92,18 +92,18 @@ To account for this, Gated Recurrent Units (GRU) were introduced by Chung, Junyo
 
 There are two major shortcomings in these RNN approaches:
 - **Information is lost over long-contexts**: for long sequences, the state vector loses the context from previous time steps. A single vector does not provide enough bandwidth to carry all relevant information over the long context.
-- **Compute inefficiency due to non-paralallelisable operations**: To generate a token o_t at time step t, we need to process all previous inputs x_i at time step i < t sequentially, which is computationally inefficient.
+- **Compute inefficiency due to non-paralallelisable operations**: To generate a token $o_t$ at time step $t$, we need to process all previous inputs $x_i$ at time step $i < t$ sequentially, which is computationally inefficient.
 
 The transformer architecture addresses these shortcomings by:
-- **Using Self-Attention:** Instead of having a state vector be updated at each time step, the transformer uses the self-attention (SA) mechanism to allow all tokens to capture each other's context. Also, this token attention is not computed sequentially. A token x_t attends to all tokens x_i with i<t simultaneously. On itself, this is would be a limitation, since we lose notion of word ordering. On LSTMs, because the vector is updated sequentially, we preserve the order of information flow (from first word to last). With SA, we lose the notion of word ordering, because there is no sequencing in the computation. To fix this, we introduce positional embeddings, which will be discussed later.
-  - SA allows a token x_t to attend to previous tokens with the same strength as any other token, close or far from itself. Thus, it fixes the information loss over long-contexts.
+- **Using Self-Attention:** Instead of having a state vector be updated at each time step, the transformer uses the self-attention (SA) mechanism to allow all tokens to capture each other's context. Also, this token attention is not computed sequentially. A token $x_t$ attends to all tokens $x_i$ with $i < t$ simultaneously. On itself, this is would be a limitation, since we lose notion of word ordering. On LSTMs, because the vector is updated sequentially, we preserve the order of information flow (from first word to last). With SA, we lose the notion of word ordering, because there is no sequencing in the computation. To fix this, we introduce positional embeddings, which will be discussed later.
+  - SA allows a token $x_t$ to attend to previous tokens with the same strength as any other token, close or far from itself. Thus, it fixes the information loss over long-contexts.
   - SA is not sequential, thus we can compute the attention scores for all pairs of tokens in the sequence in a very efficient and parallelisable way with matrix multiplication.
 
 However there is one important shortcoming introduced in the transformer architecture with respect to previous RNN approaches:
 - Now that we don't have recursion, we must define a fixed context length (i.e., the maximum number of elements in the sequence).
-- If an input sequence is smaller than this length, we fill the sequence with special tokens such as <PAD> tokens.
-- If an input sequence is larger than this length, we have to discard some tokens. Usually we truncate the sequence up to max_seq_len tokens, and discard the remaining tokens.
-- All transformer-based approaches have this pre-defined maximum sequence length. For most models similar to BERT, the maximum length is 512 tokens. For GPT-2 it is 1024, GPT-3 is 2048, LLaMa3 is around 8000 tokens.
+- If an input sequence is smaller than this length, we fill the sequence with special tokens such as \<PAD\> tokens.
+- If an input sequence is larger than this length, we have to discard some tokens. Usually we truncate the sequence up to <i>max_seq_len</i> tokens, and discard the remaining tokens.
+- All transformer-based approaches have this pre-defined maximum sequence length. For most models similar to BERT, the maximum length is $512$ tokens. For GPT-2 it is $1024$, GPT-3 is $2048$, LLaMa3 is around $8000$ tokens.
 
 # Components
 
@@ -117,16 +117,16 @@ The Multi-Head Self-Attention mechanism allows words in the sequence to "pay att
     </div>
 </div>
 <div class="caption">
-<b>Figure 4:</b> Self-Attention: The red word is the word being generated at the current time step. Blue words are words with high attention score at the current time step. Note that words from future time steps are not considered. For example at time step 0, only the first word The is considered. For time step 1, only the words "The" and "FBI" are considered. Source: Allam, Tarek & McEwen, Jason. (2021) <d-cite key="allam-mcewen-2023-paying"></d-cite>
+<b>Figure 4:</b> Self-Attention: The red word is the word being generated at the current time step. Blue words are words with high attention score at the current time step. Note that words from future time steps are not considered. For example at time step $0$, only the first word "The" is considered. For time step $1$, only the words "The" and "FBI" are considered. Source: Allam, Tarek & McEwen, Jason. (2021) <d-cite key="allam-mcewen-2023-paying"></d-cite>
 </div>
 
-To learn this component, we define three weight matrices: Query (Q), Key (K), and Value (V). These weight matrices will be multipled to obtain the attention matrix in the following way:
+To learn this component, we define three weight matrices: Query ($Q$), Key ($K$), and Value ($V$). These weight matrices will be multipled to obtain the attention matrix in the following way:
 
 $$
 \begin{equation}\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right) V\end{equation} 
 $$
 
-We apply a dot product between the queries and the keys, and then divide the result by the square root of the number of dimensions of the vectors. This is done to make the dot-product maintain variance close to 1. Then, we apply softmax to make this distribution sum to 1, and finally apply a dot-product with the value matrix. Basically the softmax computation acts as a weight to scale the influence of the value matrix.
+We apply a dot product between the queries and the keys, and then divide the result by the square root of the number of dimensions of the vectors. This is done to make the dot-product maintain variance close to $1$. Then, we apply softmax to make this distribution sum to $1$, and finally apply a dot-product with the value matrix. Basically the softmax computation acts as a weight to scale the influence of the value matrix.
 
 <div class="row mt-3" style="max-width: 80%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
@@ -178,12 +178,12 @@ query = "husky"
 attention = 0.7 * lookup["dog"] + 0.29 * lookup["wolf"] + 0.01 * lookup["cat"]
 ```
 
-The output of the scaled dot-product is a square matrix with dimensions context_length by context_length, representing the attention score of token i for token j. Note that the attention for token i to token j is not the same for token j to token i (i.e., the matrix is not symmetric). We then multiply this matrix with the value matrix to scale it according to the attention scores. V has dimension (context_size, embedding_dim), thus the dot product between the attention scores and V yields a matrix (context_size, embedding_dim).
+The output of the scaled dot-product is a square matrix with dimensions <i>context_length</i> by <i>context_length</i>, representing the attention score of token $i$ for token $j$. Note that the attention for token $i$ to token $j$ is not the same for token $j$ to token $i$ (i.e., the matrix is not symmetric). We then multiply this matrix with the value matrix to scale it according to the attention scores. $V$ has dimension (<i>context_size</i>, <i>embedding_dim</i>), thus the dot product between the attention scores and $V$ yields a matrix (<i>context_size</i>, <i>embedding_dim</i>).
 
 Another important consideration is that the self-attention mechanism is slightly different in the encoder and in the decoder:
-- In the encoder, the SA allows tokens to attend to each other bi-directionally, meaning a token x_i will attend both to previous and to following tokens.
-- In the decoder, the SA **does not** allow tokens to attend to future tokens. A token x_i is only allowed to attend to tokens x_j with j≤i.
-- The two are calculated in the exact same way. However, for the decoder, we apply a mask to remove the influence of tokens from future time steps (i.e., set the values to negative infinity).
+- In the encoder, the SA allows tokens to attend to each other bi-directionally, meaning a token $x_i$ will attend both to previous and to following tokens.
+- In the decoder, the SA **does not** allow tokens to attend to future tokens. A token $x_i$ is only allowed to attend to tokens $x_j$ with $j \leq i$.
+- The two are calculated in the exact same way. However, for the decoder, we apply a mask to remove the influence of tokens from future time steps (i.e., set the values to $-\infty$).
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
@@ -198,8 +198,8 @@ Another important consideration is that the self-attention mechanism is slightly
 
 Finally, the last missing component for this mechanism is the composition of multiple SA units into a single **Multi-Head Self-Attention (MHA)** unit.
 - Instead of having a single SA unit process the entire input vector, we define multiple SA units, and each unit will compute a piece of the vector.
-- For example, if we have a context size of 32 and embeddings of dimensions 64, a single self-attention head would output a matrix of dimension (32x64).
-- Instead, we could define a MHA with 4 heads, therefore each head will compute a matrix (32x16). We then concatenate these matrixes over the embedding dimension, reconstructing the original dimension of 64.
+- For example, if we have a context size of $32$ and embeddings of dimensions $64$, a single self-attention head would output a matrix of dimension ($32 \times 64$).
+- Instead, we could define a MHA with $4$ heads, therefore each head will compute a matrix ($32 \times 16$). We then concatenate these matrixes over the embedding dimension, reconstructing the original dimension of $64$.
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
@@ -298,7 +298,7 @@ class MultiHeadAttention(nn.Module):
 
 Unstructured inputs (e.g., text, images) must be converted into a numerical representation that will be processed. Mikolov et al. (2013) <d-cite key="mikolov-2013-efficient"></d-cite> introduced the concept of word embeddings, which are latent vectors that capture the semantics of words.
 
-In transformers, we also define an embedding matrix that will be learned jointly with the other components. The embedding matrix is initialised randomly, and is of dimension (vocabulary_size, embedding_dimension). Each input token will retrieve an embedding from the table. This embedding will then represent this token in input space.
+In transformers, we also define an embedding matrix that will be learned jointly with the other components. The embedding matrix is initialised randomly, and is of dimension (<i>vocabulary_size</i>, <i>embedding_dimension</i>). Each input token will retrieve an embedding from the table. This embedding will then represent this token in input space.
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
@@ -326,7 +326,7 @@ The benefit of this approach is that:
 1. We don't have to learn the embeddings, they are calculated analytically
 2. We can encode any arbitrary position up to infinity
 
-Other approaches involve learning the embeddings jointly with the transformer block. We define an embedding matrix of size (context_size, embedding_dimention). For each token position, we will learn an embedding. This generally works well, at the cost of having a fixed number of positions (up to context_size), and adding more trainable parameters.
+Other approaches involve learning the embeddings jointly with the transformer block. We define an embedding matrix of size (<i>context_size</i>, <i>embedding_dimention</i>). For each token position, we will learn an embedding. This generally works well, at the cost of having a fixed number of positions (up to <i>context_size</i>), and adding more trainable parameters.
 
 The input to the transformer block is the element-wise sum of both the word embedding and the positional encodings.
 
@@ -364,7 +364,7 @@ class EmbeddingEncoder(nn.Module):
 
 Up to now, all the operations performed are linear transformations: matrix multiplications, softmax, addition. To add non-linearity, we simply put a feed forward network with a non-linear activation after the MHA layer.
 
-This is usually a very shallow network with only 1 hidden layer with a ReLU / GeLU / etc. activation function. It is also common to do an up projection and a down projection in the hidden layer, meaning the input gets stretched to a higher dimensional space when entering the hidden unit, then gets down projected to the original size after leaving the hidden unit.
+This is usually a very shallow network with only $1$ hidden layer with a ReLU / GeLU / etc. activation function. It is also common to do an up projection and a down projection in the hidden layer, meaning the input gets stretched to a higher dimensional space when entering the hidden unit, then gets down projected to the original size after leaving the hidden unit.
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
@@ -372,7 +372,7 @@ This is usually a very shallow network with only 1 hidden layer with a ReLU / Ge
     </div>
 </div>
 <div class="caption">
-<b>Figure 10:</b> Multi-Layer Perceptron: Input gets up projected from 3 to 4 dimensions, then down projected back from 4 to 3 dimensions. Source: Garg, Siddhant & Ramakrishnan, Goutham. (2020) <d-cite key="garg-ramakrishnan-2020-advances"></d-cite>.
+<b>Figure 10:</b> Multi-Layer Perceptron: Input gets up projected from $3$ to $4$ dimensions, then down projected back from $4$ to $3$ dimensions. Source: Garg, Siddhant & Ramakrishnan, Goutham. (2020) <d-cite key="garg-ramakrishnan-2020-advances"></d-cite>.
 </div>
 
 ### Implementation
@@ -401,7 +401,7 @@ class MLP(nn.Module):
 
 ## Batch Normalisation
 
-Batch normalisation is a procedure that helps stabilise and accelerate the training process by reducing internal covariate shift, which refers to the change in the distribution of layer inputs during training. It consists in normalising the outputs of the layers so that their distribution have a mean of 0 and a variance of 1, then applying two learned parameters to scale and shift the distribution. This reduces the chance that gradients explode or vanish (grow or shrink exponentially). This is a key engineering component in ensuring that large and deep neural networks can converge in a stable fashion.
+Batch normalisation is a procedure that helps stabilise and accelerate the training process by reducing internal covariate shift, which refers to the change in the distribution of layer inputs during training. It consists in normalising the outputs of the layers so that their distribution have a mean of $0$ and a variance of $1$, then applying two learned parameters to scale and shift the distribution. This reduces the chance that gradients explode or vanish (grow or shrink exponentially). This is a key engineering component in ensuring that large and deep neural networks can converge in a stable fashion.
 
 To normalise an input batch, we scale it in this fashion:
 
@@ -417,7 +417,7 @@ $$
 out = \gamma \hat{x}_i + \beta
 $$
 
-If the learned gamma is equal to 1 and the learned beta is equal to 0, this layer is simply normalising the input to mean 0 and variance 1. However, the model may learn other parameters that allows it to scale and shift the distribution as it pleases.
+If the learned $\gamma$ is equal to $1$ and the learned $\beta$ is equal to $0$, this layer is simply normalising the input to mean $0$ and variance $1$. However, the model may learn other parameters that allows it to scale and shift the distribution as it pleases.
 
 ### Implementation
 
@@ -496,7 +496,7 @@ Residual connections address these issues by allowing the gradient to flow direc
     </div>
 </div>
 <div class="caption">
-<b>Figure 11:</b> Residual Connection in a feed forward neural network. The input X branches in two directions: the first direction goes into the MLP and is processed normally. The other direction skips the MLP completely, (i.e., the input is not changed at all). Both branches are aggregated afterwards. Source: He, Kaiming, et al. "Deep residual learning for image recognition." <i>Proceedings of the IEEE conference on computer vision and pattern recognition</i>. 2016.
+<b>Figure 11:</b> Residual Connection in a feed forward neural network. The input $X$ branches in two directions: the first direction goes into the MLP and is processed normally. The other direction skips the MLP completely, (i.e., the input is not changed at all). Both branches are aggregated afterwards. Source: He, Kaiming, et al. (2016) <d-cite key="he-2016-deep"></d-cite>.
 </div>
 
 For very deep neural nets, at some point the data transformations being applied to the input are not beneficial anymore, and performance starts decreasing. To fix this, residual connections allow some layers to simply learn "nothing", i.e. learn to pass the input as the output without modifying it whatsoever (i.e., learn the identity function). With this approach, scaling the network should never hurt performance, as it can simply stop learning new functions if needed.
