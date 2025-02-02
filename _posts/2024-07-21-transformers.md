@@ -3,7 +3,7 @@ layout: distill
 title: Transformers
 description: Notes on the Transformer architecture.
 tags: study nlp
-giscus_comments: true
+giscus_comments: false
 date: 2024-07-21
 featured: true
 
