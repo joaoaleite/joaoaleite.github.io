@@ -63,11 +63,33 @@ The transformer is a sequence-to-sequence neural architecture that revolutionize
     (<a href="https://pub.aimind.so/summary-of-transformer-achitecture-c2cef6dcaca6">Source</a>).
 </div>
 
+
+Transformers process sequential data (e.g., language), and excel at tasks where understanding the relationships between elements in the sequence is important. For example:
+- **Machine Translation:** Automatically converts text from one language to another.
+    > **Input:** English sentence  
+    > **Output:** Same sentence in French
+
+- **Text Summarization:** Produces a concise summary from a longer piece of text.
+    > **Input:** Long article  
+    > **Output:** Short summary
+
+- **Text Generation:** Generates new text based on a given prompt or partial sentence.
+    > **Input:** Prompt or partial sentence  
+    > **Output:** Continuation or full sentence
+
+- **Question Answering:** Finds or generates answers to questions based on a provided passage.
+    > **Input:** Passage and a question  
+    > **Output:** Answer extracted or generated from the passage
+
+- **Text Classification:** Assigns predefined categories or labels to a given text based on its content.
+    > **Input:** Product review  
+    > **Output:** Sentiment label (e.g., positive, negative)
+
+
 # Motivation
+The motivation behind the transformer architecture stems from the limitations of earlier sequence-to-sequence models based on Recurrent Neural Networks (RNNs).
 
-The motivation behind the transformer architecture lies in the limitations found in the previous state-of-the-art architectures for seq2seq tasks that used Recurrent Neural Networks (RNNs).
-
-The Long Short-Term Memory (LSTM) architecture encoded the context from previous time steps in a single "state vector" that is continuously updated as information flows through each processing step. However, this results in the state vector suffering significant changes from one step to the next, and thus losing previous context quickly, especially from far-away previous steps.
+RNNs encode contextual information from previous time steps into "state vectors" that are updated at each step. This approach leads to the state vector being significantly altered with each new input, causing the model to quickly lose information about earlier context in long sequences.
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
@@ -75,11 +97,10 @@ The Long Short-Term Memory (LSTM) architecture encoded the context from previous
     </div>
 </div>
 <div class="caption">
-    <b>Figure 2:</b> Recurrent Neural Network: each time step $t$ processes an input $x_t$ and outputs an output $o_t$. A state vector $V$ is carried from previous time steps (initialised as zero). Source: Raj, Dinesh Samuel Sathia et al. <d-cite key="raj-2019-analysis"></d-cite>
+    <b>Figure 2:</b> Recurrent Neural Network (RNN): At each time step $t$, the RNN receives an input token $x_t$ along with a state vector $h_{t-1}$, and produces an output token $o_t$ as well as an updated state vector $h_t$. This recurrent process allows the model to maintain contextual information across the sequence. Source: Raj, Dinesh Samuel Sathia et al. <d-cite key="raj-2019-analysis"></d-cite>
 </div>
 
-
-To account for this, Gated Recurrent Units (GRU) were introduced by Chung, Junyoung et al. (2014) <d-cite key="chung-etal-2014-empirical"></d-cite>. The key idea behind GRU is the use of gate mechanisms that open or close the information flow (i.e., control when and how much to update the context vector in a given time step). This allows the context to flow for longer sequences, as some unimportant states can be ignored.
+Other variations of RNNs attempt to mitigate this issue. For example, Gated Recurrent Units (GRUs) <d-cite key="chung-etal-2014-empirical"></d-cite> use gating mechanisms to control the flow of information by deciding when and how much to update the state vector at each time step. This enables the model to retain relevant context over longer sequences by allowing it to ignore less important states.
 
 <div class="row mt-3" style="max-width: 50%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
@@ -87,59 +108,230 @@ To account for this, Gated Recurrent Units (GRU) were introduced by Chung, Junyo
     </div>
 </div>
 <div class="caption">
-<b>Figure 3:</b> The update gate $z$ selects whether the hidden state $h_t$ is to be updated with a new hidden state $\tilde{h}_t$. The reset gate $r$ decides whether the previous hidden state $h_{t-1}$ is ignored. Source: Cho, Kyunghyun, et al. <d-cite key="cho-etal-2014-learning"></d-cite>
+<b>Figure 3:</b> Gated Recurrent Units (GRUs): The update gate $z$ determines how much of the previous hidden state $h_{t-1}$ is carried forward versus how much is updated with the new candidate hidden state $\tilde{h}_t$. The reset gate $r$ controls how much of the previous hidden state is ignored when computing the candidate hidden state. Source: Cho, Kyunghyun, et al. <d-cite key="cho-etal-2014-learning"></d-cite>
 </div>
+Although these mechanisms help, the fundamental architectural issues associated with sequential processing still persist:
 
-There are two major shortcomings in these RNN approaches:
-- **Information is lost over long-contexts**: for long sequences, the state vector loses the context from previous time steps. A single vector does not provide enough bandwidth to carry all relevant information over the long context.
-- **Compute inefficiency due to non-paralallelisable operations**: To generate a token $o_t$ at time step $t$, we need to process all previous inputs $x_i$ at time step $i < t$ sequentially, which is computationally inefficient.
+- **Information loss over long contexts:** For long sequences, the state vector gradually loses information from earlier time steps, which are overwritten by information from later time steps.
+- **Compute inefficiency due to non-parallelizable operations:** To generate a token $o_t$ at time step $t$, all previous inputs $x_i$ for $i < t$ must be processed sequentially. This lack of parallelism makes computation prohibitively inefficient when training on extremely large datasets.
 
-The transformer architecture addresses these shortcomings by:
-- **Using Self-Attention:** Instead of having a state vector be updated at each time step, the transformer uses the self-attention (SA) mechanism to allow all tokens to capture each other's context. Also, this token attention is not computed sequentially. A token $x_t$ attends to all tokens $x_i$ with $i < t$ simultaneously. On itself, this is would be a limitation, since we lose notion of word ordering. On LSTMs, because the vector is updated sequentially, we preserve the order of information flow (from first word to last). With SA, we lose the notion of word ordering, because there is no sequencing in the computation. To fix this, we introduce positional embeddings, which will be discussed later.
-  - SA allows a token $x_t$ to attend to previous tokens with the same strength as any other token, close or far from itself. Thus, it fixes the information loss over long-contexts.
-  - SA is not sequential, thus we can compute the attention scores for all pairs of tokens in the sequence in a very efficient and parallelisable way with matrix multiplication.
+# Core Idea
+The core component powering the transformer architecture is the **Self-Attention (SA)** mechanism. Instead of relying on a state vector that is updated step by step, self-attention allows every token in a sequence to directly "attend" to all other tokens at once. This means that, for any token $x_t$, the model can consider the context of all tokens $x_i$ (for all $i$) simultaneously, rather than sequentially. This overcomes the information loss over long contexts that occurs in RNNs.
 
-However there is one important shortcoming introduced in the transformer architecture with respect to previous RNN approaches:
-- Now that we don't have recursion, we must define a fixed context length (i.e., the maximum number of elements in the sequence).
-- If an input sequence is smaller than this length, we fill the sequence with special tokens such as \<PAD\> tokens.
-- If an input sequence is larger than this length, we have to discard some tokens. Usually we truncate the sequence up to <i>max_seq_len</i> tokens, and discard the remaining tokens.
-- All transformer-based approaches have this pre-defined maximum sequence length. For most models similar to BERT, the maximum length is $512$ tokens. For GPT-2 it is $1024$, GPT-3 is $2048$, LLaMa3 is around $8000$ tokens.
 
-# Components
-
-## Multi-Head Self-Attention (MHA)
-
-The Multi-Head Self-Attention mechanism allows words in the sequence to "pay attention" (attend) to each other, and through the learning procedure, eventually they will be able of identifying which words from previous time-steps are relevant to generate the element for the current time step.
-
-<div class="row mt-3">
+<div class="row mt-3" style="max-width: 50%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/attention-example.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/token-attention.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
-<b>Figure 4:</b> Self-Attention: The red word is the word being generated at the current time step. Blue words are words with high attention score at the current time step. Note that words from future time steps are not considered. For example at time step $0$, only the first word "The" is considered. For time step $1$, only the words "The" and "FBI" are considered. Source: Allam, Tarek & McEwen, Jason. (2021) <d-cite key="allam-mcewen-2023-paying"></d-cite>
+<b>Figure 4:</b> The token "it" attends to all other tokens in the sequence simultaneously. Attenion scores between the token "it" and the tokens "The", "monkey", "that", "banana", "it" are high. Source: Huiqiang Xie, Zhijin Qin, Geoffrey Li (2021). <d-cite key="xie_deep_learning_semantic"></d-cite>
 </div>
 
-To learn this component, we define three weight matrices: Query ($Q$), Key ($K$), and Value ($V$). These weight matrices will be multipled to obtain the attention matrix in the following way:
+Additionally, because attention is computed in parallel across the entire sequence using highly efficient matrix operations, modern hardware such as GPUs and TPUs can be leveraged to greatly accelerate both training and inference, enabling training larger models on bigger datasets.
+
+However, this design shift in the architecture from RNNs to self-attention, does not come only with benefits. The self-attention mechanism has important drawbacks in comparison to RNNs:
+- <b>Quadratic computational complexity</b>: For a sequence of length $N$, this requires computing an $N{\times}N$ attention matrix. This leads to a computational and memory complexity of $O(N^2)$, i.e., doubling the input length quadruples the necessary computation. In contrast, RNNs have a linear complexity of $O(N)$, i.e., doubling the input length also doubles the necessary computation. This quadratic scaling makes processing very long sequences expensive.
+- <b>Fixed-size sequence length</b>: A direct consequence of the quadratic complexity is that Self-Attention must operate on a fixed-length context window. All input sequences are truncated or padded to a predefined maximum length (e.g., 512 tokens). This prevents the model from processing sequences of arbitrary length, a task that RNNs can handle naturally due to their step-by-step processing.
+
+The Self-Attention mechanism is the core of the Transformer architecture, but other components are essential for it to function in practice. Next, we will discuss each component in greater detail.
+
+# Components
+
+## Word Embeddings and Positional Encodings
+
+Unstructured inputs such as text or images must be converted into numerical representations before they can be processed by machine learning models. These numerical representations should encode information about the input in such a way that, for example, vectors representing two synonymous words are close together in the embedding space. There are several methods to learn such vectors. For example, Mikolov et al. (2013) <d-cite key="mikolov-2013-efficient"></d-cite> introduced the continuous bag-of-words and continuous skip-gram models, which learn dense, low-dimensional vectors that capture the semantic meaning of words.
+
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/word-embeddings.png" class="img-fluid rounded z-depth-1" %}
+    </div>
+</div>
+<div class="caption">
+<b>Figure 5:</b> Word Embeddings (<a href="https://arize.com/blog-course/embeddings-meaning-examples-and-how-to-compute/">Source</a>).
+</div>
+
+With transformers, input tokens are mapped into dense vectors using an **embedding layer**. The embedding matrix is initialized randomly with shape (<i>vocabulary_size</i>, <i>embedding_dimension</i>) and is learned jointly with the rest of the model during training. Each input token retrieves its corresponding embedding from this table, providing a continuous vector representation that captures semantic properties of the token.
+
+Along with word embeddings, the transformer architecture introduces a second type of embedding called **positional encodings**. This is necessary because the self-attention mechanism is invariant to the order of tokens in the input sequence. Since self-attention processes all tokens in parallel, it treats the input as a set rather than a sequence. Without positional information, the model cannot distinguish between the first, second, or any other position in the sequence, and thus cannot capture the sequential structure of language. 
+
+To address this, we introduce positional encodings that explicitly encode the order of tokens. There are two main approaches to computing positional encodings: using sinusoidal functions or learning the positional encodings jointly with the model. Each method has its own advantages and drawbacks, and the choice often depends on the specific application and requirements.
+
+- **Sinusoidal positional encodings** (as introduced in the original Transformer paper) use fixed sine and cosine functions of different frequencies to encode each position. This approach allows the model to extrapolate to sequence lengths not seen during training and provides a deterministic, non-learnable way to represent position.
+- **Learned positional encodings** treat the positional embeddings as parameters that are learned during training, similar to word embeddings. This approach allows the model to adapt the positional information to the specific dataset and task, potentially improving performance, but may not generalize as well to longer sequences.
+
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/positional-embeddings.png" class="img-fluid rounded z-depth-1" %}
+    </div>
+</div>
+<div class="caption">
+<b>Figure 9:</b> Sinusoidal positional encodings (<a href="https://towardsdatascience.com/understanding-positional-encoding-in-transformers-dc6bafc021ab">Source</a>).
+</div>
+
+The final input to the transformer block is the element-wise sum of the word embeddings and the positional encodings, allowing the model to capture both semantic meaning and positional information.
+
+Note that the input to the embedding layer is a sequence of token ids, and the output is a matrix of size (<i>context_window</i>, <i>embedding_dimension</i>), where each row represents an input token, and each column represents a feature.
+
+### Implementation
+The implementation below considers the approach of jointly learning the positional encodings alongside the rest of the model components.
+
+```python
+class EmbeddingEncoder(nn.Module):
+    def __init__(self, dim_embedding, vocab_size, context_size):
+        super().__init__()
+        self.embedding_table = nn.Embedding(
+            vocab_size,
+            dim_embedding
+        )
+        self.positional_embedding_table = nn.Embedding(
+            context_size,
+            dim_embedding
+        )
+        self.context_size = context_size
+
+    def forward(self, x):
+        x_emb = self.embedding_table(x)
+        pos_emb = self.positional_embedding_table(
+            torch.arange(
+                self.block_size,
+                device=device
+              )
+            )
+        
+        return x_emb + pos_emb
+```
+
+## Self-Attention (SA)
+
+As discussed previously, the Self-Attention mechanism enables each token in the input sequence to attend to every other token, allowing the model to capture long-range dependencies (see **Figure 4**).
+
+The goal of self-attention is to learn the relative importance between all pairs of tokens in the sequence. To achieve this, the model computes "attention scores" in the form of a square matrix of size $N{\times}N$, where $N$ is the sequence length, and each entry in the matrix represents how much attention token $i$ should pay to token $j$.
+
+<div class="row mt-3" style="max-width: 50%; height: auto; margin: 0 auto;">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/attention-matrix.png" class="img-fluid rounded z-depth-1" %}
+    </div>
+</div>
+<div class="caption">
+<b>Figure 6</b>: Attention scores for an input sequence "Hello I love you". (<a href="https://theaisummer.com/attention/">Source</a>)
+</div>
+
+With this goal in mind, let's take a step back to understand how to frame this problem in such a way that the model can learn how to produce the attention scores. We can represent each token in the sequence using three distinct feature vectors: queries ($Q$), keys ($K$), and values ($V$). Intuitively, the kind of information that we want to encode into these vectors are:
+
+- **Query:** What features am I searching for in other tokens? (What am I looking for?)
+- **Key:** What features do I present to other tokens, so they can determine if I am relevant to them? (How do I describe myself to others?)
+- **Value:** What information do I carry that should be shared if another token attends to me? (What do I represent?)
+
+In practice, we learn these features in the following manner: we randomly initialize three weight matrices: Key ($W_K$), Query ($W_Q$), and Value ($W_V$) matrices. Each of these matrices will multiply the input sentence embedding matrix to obtain the keys, queries, and values $Q$, $K$, and $V$, respectively.
+
+<div class="row mt-3" style="max-width: 80%; height: auto; margin: 0 auto;">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/attention-query-key-value.png" class="img-fluid rounded z-depth-1" %}
+    </div>
+</div>
+<div class="caption">
+<b>Figure 7:</b> Keys, Queries, and Values: Three randomly initialized matrices multiply the input embedding to obtain the Keys, Queries, and Values for that particular input sequence (<a href="https://epichka.com/blog/2023/qkv-transformer/">Source</a>).
+</div>
+
+Now to obtain the attention scores, we apply the following equation:
 
 $$
 \begin{equation}\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right) V\end{equation} 
 $$
 
-We apply a dot product between the queries and the keys, and then divide the result by the square root of the number of dimensions of the vectors. This is done to make the dot-product maintain variance close to $1$. Then, we apply softmax to make this distribution sum to $1$, and finally apply a dot-product with the value matrix. Basically the softmax computation acts as a weight to scale the influence of the value matrix.
+Let's break the equation down step-by-step. 
+
+### Dot Product ($QK^T$)
+Let's ignore the term $\sqrt{d_k}$ for now. Remember the intuitive meaning of $Q$ (What am I looking for?) and $K$ (How do I describe myself to others?). When we perform a dot-product between $Q$ and $K^T$, we are essentially computing a similarity score between the two features. If ${Q_i}{\cdot}{K_j}^T$ is high, it means that token $j$ has the kind of features that token $i$ is looking for. Let's illustrate this with an example.
+
+Imagine we have three tokens from the sentence "The cats are chasing the mouse": **chasing**, **cat**, and **mouse**. For the self-attention mechanism, each token generates Query, Key, and Value vectors. Here, we'll focus on how **chasing** computes attention scores with respect to **cat** and **mouse**.
+
+Let's assume the following Query and Key vectors have been generated:
+
+* $Q_{chasing} = [-2.0, \ 3.0, \ 2.5, \ -1.0, \ 1.5, \ -2.0]$
+* $K_{cat} = [-1.8, \ 2.8, \ 3.0, \ 0.2, \ 2.5, \ -1.5]$
+* $K_{mouse} = [-1.5, \ -2.0, \ 2.8, \ -0.5, \ -2.0, \ 3.0]$
+
+---
+
+#### 1. Score: `chasing` → `cat`
+
+We compute the dot product of the query from `chasing` and the key from `cat`.
+
+$Q_{chasing} \cdot K_{cat} = [-2.0, 3.0, 2.5, -1.0, 1.5, -2.0] \cdot [-1.8, 2.8, 3.0, 0.2, 2.5, -1.5]$
+
+The step-by-step multiplication of corresponding elements looks like this:
+
+* $(-2.0 \times -1.8) = 3.6$ (Match ✅)
+* $(3.0 \times 2.8) = 8.4$ (Strong Match ✅)
+* $(2.5 \times 3.0) = 7.5$ (Strong Match ✅)
+* $(-1.0 \times 0.2) = -0.2$ (Minor Mismatch ❌)
+* $(1.5 \times 2.5) = 3.75$ (Match ✅)
+* $(-2.0 \times -1.5) = 3.0$ (Match ✅)
+
+The final similarity score is the sum of these products:
+$$3.6 + 8.4 + 7.5 - 0.2 + 3.75 + 3.0 = \textbf{26.05}$$
+
+---
+
+#### 2. Score: `chasing` → `mouse`
+
+Next, we compute the dot product of the query from `chasing` and the key from `mouse`.
+
+$Q_{chasing} \cdot K_{mouse} = [-2.0, 3.0, 2.5, -1.0, 1.5, -2.0] \cdot [-1.5, -2.0, 2.8, -0.5, -2.0, 3.0]$
+
+The step-by-step multiplication reveals significant disagreement:
+
+* $(-2.0 \times -1.5) = 3.0$ (Match ✅)
+* $(3.0 \times -2.0) = -6.0$ (Strong Mismatch ❌)
+* $(2.5 \times 2.8) = 7.0$ (Strong Match ✅)
+* $(-1.0 \times -0.5) = 0.5$ (Minor Match ✅)
+* $(1.5 \times -2.0) = -3.0$ (Mismatch ❌)
+* $(-2.0 \times 3.0) = -6.0$ (Strong Mismatch ❌)
+
+The final similarity score reflects this poor alignment:
+$$3.0 - 6.0 + 7.0 + 0.5 - 3.0 - 6.0 = \textbf{-4.5}$$
+
+The high positive score for **cat** and the negative score for **mouse** indicate that "cat" is far more relevant to "chasing" in this context. Let's continue on to the next part of the equation.
+
+
+### Softmax
+
+The Softmax function takes the unbounded $(-\inf, +\inf)$ scores obtained from the dot product, and turns them into a probability distribution ($[0, 1]$, summing to $1$). This gives us the actual attention scores (see **Figure 6**).
 
 <div class="row mt-3" style="max-width: 80%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/attention-mechanism.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/attention-softmax.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
-<b>Figure 5:</b> Attention Mechanism: The input X is multiplied with matrices $\theta$, $\phi$, and $g$ to obtain the resulting matrices $Q$, $K$, and $V$. $Q$ and $K$ are multiplied to obtain the attention score matrix, that is finally multiplied with the $V$ matrix (<a href="https://blogs.oracle.com/ai-and-datascience/post/multi-head-self-attention-in-nlp">Source</a>).
+<b>Figure 8:</b> Softmax (<a href="https://www.mdpi.com/2076-3417/13/23/12784">Source</a>).
 </div>
 
-A good intuition for how this works is to compare the concept with a lookup table / hash table / dictionary.
+Note that the softmax functions does exactly what its name suggests: a soft version of a max function. With a max function, we would get a $1$ for the largest element in the sequence, and $0$ for everything else. With softmax, we want the highest values to accumulate most of the probability distribution, with smaller values being close to $0$.
 
-In a lookup table, we have the following structure:
+### The Scaling Factor ($\sqrt{d_k}$)
+
+The reason to introduce the scaling factor $\sqrt{d_k}$ is because of how the dot product and the softmax function behave. Dot products can grow large, especially with high-dimensional vectors. Large inputs can push the Softmax function into regions where its gradient is almost zero, which makes training unstable. Scaling mitigates this issue by ensuring the input to the softmax function is not extremely large.
+
+### Output Contextual Vectors (Weighted Sum with $V$)
+
+So far, we've calculated who each token should pay attention to. The attention weights tell us the importance of other tokens. Now, we need to use these weights to combine the substance of those tokens. While the Query and Key vectors are used to establish relationships, the Value $V$ vector contains the actual information of a token that we want to aggregate.
+
+The final step is to multiply our attention weights by their corresponding Value vectors and sum them up. This is a **weighted average**.
+
+$$Z_i = \sum_{j} \text{Attention}(i, j) \cdot V_j$$
+
+Note that $Z_i$, the final output vector for token $i$, is composed of all the $V_j$ vectors for every token $j$ in the sequence, weighted by how much they are important to token $i$.
+
+### (Optional) Self-Attention as a Soft Hash Table
+If the attention mechanism is already clear by this point, this section can be skipped.
+
+
+Another good example to build intuition for how the Self-Attention mechanism works is to compare it with the concept of a lookup table / hash table / dictionary.
+
+In a python dictionary, a query will either match entirely with an existing key (and then return it's value), or it will not match at all with any of the keys (and then return an error or a predefined value):
 
 ```python
 d = {
@@ -148,20 +340,22 @@ d = {
     "cat": "meow"
 }
 
-# this key exists, the query will match
-# and return "value1"
+# this key exists, the query will match and return "bark"
 query1 = "dog" 
 value1 = lookup[query1]
 
-# this key doesnt exist, the query won't 
-# match and return and error
-query3 =  "bird"
-value3 = lookup[query3]
+print(value1)
+### Output: "bark"
+
+# this query doesnt match with any existing key, and we will get an error
+query2 =  "bird"
+value2 = lookup[query2]
+
+print(value2)
+### Output: Exception
 ```
 
-Note how a query will either match entirely with a single key (and then return it's value), or it will not match at all with any of the keys (and then return an error or a predefined value).
-
-In the attention mechanism, we are performing a similar operation, but we implement a "soft" match of keys and queries. In fact, all queries will match will all keys, but in different intensities. The softmax computation introduces this notion of intensity, which will weigh the value that is going to be returned.
+In the attention mechanism, we are performing a similar operation, but we implement a "soft" match of keys and queries. In fact, all queries will match will all keys, but in different intensities. The softmax computation introduces this notion of intensity, which will weigh the value that is returned.
 
 ```python
 d = {
@@ -171,14 +365,25 @@ d = {
 }
 
 # query doesn't exist in the dictionary
-# but still we will match it with the keys by their similarity
 query = "husky"
 
-# the query has high similarity with dog, less with wolf, almost none with cat
-attention = 0.7 * lookup["dog"] + 0.29 * lookup["wolf"] + 0.01 * lookup["cat"]
+# but we can compute its similarity with the existing keys
+# assume that the 'similarity' and 'softmax' functions exist.
+similarities = [similarity(key, query) for key in d.keys()]
+attention_scores = [softmax(s/sqrt(d_k)) for s in similarities]
+contextual_vector = [
+    attn_score * value for attn_score, value in zip(attention_scores, d.values())
+]
+
+# example:
+# similarities = [4.0, 3.0, -1.0]
+# attention_scores = [0.70, 0.26, 0.04]  
+# contextual_vector = [0.7 * "bark", 0.25 * "howl", 0.05 * "meow"]
+
+# this now represents the token that is associated with the query "husky"
 ```
 
-The output of the scaled dot-product is a square matrix with dimensions <i>context_length</i> by <i>context_length</i>, representing the attention score of token $i$ for token $j$. Note that the attention for token $i$ to token $j$ is not the same for token $j$ to token $i$ (i.e., the matrix is not symmetric). We then multiply this matrix with the value matrix to scale it according to the attention scores. $V$ has dimension (<i>context_size</i>, <i>embedding_dim</i>), thus the dot product between the attention scores and $V$ yields a matrix (<i>context_size</i>, <i>embedding_dim</i>).
+### Masked Self-Attention
 
 Another important consideration is that the self-attention mechanism is slightly different in the encoder and in the decoder:
 - In the encoder, the SA allows tokens to attend to each other bi-directionally, meaning a token $x_i$ will attend both to previous and to following tokens.
@@ -292,72 +497,6 @@ class MultiHeadAttention(nn.Module):
         out = self.proj(out)
         
         return out
-```
-
-## Word Embeddings and Positional Encodings
-
-Unstructured inputs (e.g., text, images) must be converted into a numerical representation that will be processed. Mikolov et al. (2013) <d-cite key="mikolov-2013-efficient"></d-cite> introduced the concept of word embeddings, which are latent vectors that capture the semantics of words.
-
-In transformers, we also define an embedding matrix that will be learned jointly with the other components. The embedding matrix is initialised randomly, and is of dimension (<i>vocabulary_size</i>, <i>embedding_dimension</i>). Each input token will retrieve an embedding from the table. This embedding will then represent this token in input space.
-
-<div class="row mt-3">
-    <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/word-embeddings.png" class="img-fluid rounded z-depth-1" %}
-    </div>
-</div>
-<div class="caption">
-<b>Figure 8:</b> Word Embeddings (<a href="https://arize.com/blog-course/embeddings-meaning-examples-and-how-to-compute/">Source</a>).
-</div>
-
-Along the word embeddings, the transformer architecture defines a second type of embedding called **positional encodings**. Previously in this document we discussed how the SA mechanism doesn't introduce any notion of space. The model doesn't know what is the first and the second token and so on. Therefore, we must somehow encode this information.
-
-There are many approaches to encode position into the word embeddings. Some approaches don't involve learning new weights. For example, we can use sine and cosine functions to encode relative positions as a combination of previous positions.
-
-<div class="row mt-3">
-    <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/positional-embeddings.png" class="img-fluid rounded z-depth-1" %}
-    </div>
-</div>
-<div class="caption">
-<b>Figure 9:</b> Positional Encoding with sine and cosine functions (<a href="https://towardsdatascience.com/understanding-positional-encoding-in-transformers-dc6bafc021ab">Source</a>).
-</div>
-
-The benefit of this approach is that:
-1. We don't have to learn the embeddings, they are calculated analytically
-2. We can encode any arbitrary position up to infinity
-
-Other approaches involve learning the embeddings jointly with the transformer block. We define an embedding matrix of size (<i>context_size</i>, <i>embedding_dimention</i>). For each token position, we will learn an embedding. This generally works well, at the cost of having a fixed number of positions (up to <i>context_size</i>), and adding more trainable parameters.
-
-The input to the transformer block is the element-wise sum of both the word embedding and the positional encodings.
-
-### Implementation
-
-```python
-class EmbeddingEncoder(nn.Module):
-    def __init__(self, dim_embedding, vocab_size, context_size):
-        super().__init__()
-        
-        self.embedding_table = nn.Embedding(
-            vocab_size,
-            dim_embedding
-          )
-        self.positional_embedding_table = nn.Embedding(
-            context_size,
-            dim_embedding
-          )
-
-    def forward(self, x):
-        x_emb = self.embedding_table(x)
-        pos_emb = self.positional_embedding_table(
-            torch.arange(
-                self.block_size,
-                device=device
-              )
-            )
-
-        x_emb = x_emb + pos_emb
-        
-        return x_emb
 ```
 
 ## Feed Forward / Multi-layer Perceptron (MLP)
