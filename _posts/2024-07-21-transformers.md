@@ -317,7 +317,7 @@ The reason to introduce the scaling factor $\sqrt{d_k}$ is because of how the do
 
 ### Output Contextual Vectors (Weighted Sum with $V$)
 
-So far, we've calculated who each token should pay attention to. The attention weights tell us the importance of other tokens. Now, we need to use these weights to combine the substance of those tokens. While the Query and Key vectors are used to establish relationships, the Value $V$ vector contains the actual information of a token that we want to aggregate.
+So far, we've calculated who each token should pay attention to. The attention weights tell us the importance of other tokens. Now, we need to use these weights to combine the substance of those tokens. While the Query and Key vectors are used to establish relationships, the Value vector $V$ contains the actual information of a token that we want to aggregate.
 
 The final step is to multiply our attention weights by their corresponding Value vectors and sum them up. This is a **weighted average**.
 
@@ -384,7 +384,6 @@ contextual_vector = [
 ```
 
 ### Masked Self-Attention
-
 Another important consideration is that the self-attention mechanism is slightly different in the encoder and in the decoder:
 - In the encoder, the SA allows tokens to attend to each other bi-directionally, meaning a token $x_i$ will attend both to previous and to following tokens.
 - In the decoder, the SA **does not** allow tokens to attend to future tokens. A token $x_i$ is only allowed to attend to tokens $x_j$ with $j \leq i$.
