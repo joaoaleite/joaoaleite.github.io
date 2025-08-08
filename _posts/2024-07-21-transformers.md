@@ -378,7 +378,7 @@ contextual_vector = [
 # example:
 # similarities = [4.0, 3.0, -1.0]
 # attention_scores = [0.70, 0.26, 0.04]  
-# contextual_vector = [0.7 * "bark", 0.25 * "howl", 0.05 * "meow"]
+# contextual_vector = [0.70 * "bark", 0.26 * "howl", 0.04 * "meow"]
 
 # this now represents the token that is associated with the query "husky"
 ```
