@@ -659,7 +659,7 @@ class GenericLayer(nn.Module):
 
 # Full Implementation with Practical Example
 
-Check this [google collab](https://colab.research.google.com/drive/1FONo7C6lrhkPSaq5TFLeQ14lWMMisW0e?usp=sharing) to test the architecture with a practical example borrowed from [Andrej Karpathy's lecture series](https://youtu.be/kCc8FmEb1nY).
+Check this [google collab](https://colab.research.google.com/drive/1VgnBUECZm0ylq5Cx6D9uT4Lep0gWYi7R?usp=sharing) to test the architecture with a practical example borrowed from [Andrej Karpathy's lecture series](https://youtu.be/kCc8FmEb1nY).
 
 ```python
 class AttentionHeadLayer(nn.Module):
@@ -805,7 +805,6 @@ class DecoderTransformer(nn.Module):
 
         return out, loss
 
-    @torch.nograd()
     def generate(self, idx, max_new_tokens):
         for _ in range(max_new_tokens):
             idx_cond = idx[:, -block_size:]
