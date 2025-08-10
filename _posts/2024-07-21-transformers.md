@@ -18,14 +18,16 @@ bibliography: 2024-07-21-transformers.bib
 toc:
   - name: Introduction
   - name: Motivation
+  - name: Core Concept
   - name: Components
     subsections:
-      - name: Multi-Head Self-Attention
-      - name: Word Embeddings and Positional Encodings  
-      - name: Feed Forward Network
-      - name: Batch Normalisation
+      - name: Word Embeddings and Positional Encodings
+      - name: Self-Attention (SA)
+      - name: Multi-Head Self-Attention (MHA)
+      - name: Point-Wise Feed Forward Network (FFN)
+      - name: Layer Normalisation
       - name: Residual Connections
-  - name: Implementation
+  - name: Full Implementation with Practical Example
   - name: Variations
     subsections:
       - name: Encoder-Decoder
@@ -115,7 +117,7 @@ Although these mechanisms help, the fundamental architectural issues associated 
 - **Information loss over long contexts:** For long sequences, the state vector gradually loses information from earlier time steps, which are overwritten by information from later time steps.
 - **Compute inefficiency due to non-parallelizable operations:** To generate a token $o_t$ at time step $t$, all previous inputs $x_i$ for $i < t$ must be processed sequentially. This lack of parallelism makes computation extremely inefficient when training on extremely large models and datasets.
 
-# Transformer's Core Concept: Self-Attention
+# Core Concept: Self-Attention
 The core component powering the transformer architecture is the **Self-Attention (SA)** mechanism. Instead of relying on a state vector that is countinuously updated at each time step, self-attention allows every token in the sequence to  **"attend"** to (i.e., be influenced by) all other tokens directly, in parallel. This means that any token $x_t$ can consider the context of all tokens $x_i$ (for all $i$) simultaneously. This overcomes the information loss over long contexts that occurs in RNNs.
 
 <div class="row mt-3" style="max-width: 50%; height: auto; margin: 0 auto;">
@@ -137,7 +139,9 @@ However, this design shift in the architecture from RNNs to self-attention, does
 
 The Self-Attention mechanism is the core of the Transformer architecture, but other components are essential for it to function properly. Next, we will discuss each component in greater detail.
 
-# Components of the Transformer Architecture
+# Components
+
+The Transformer model is composed of several key components, each playing a crucial role in its functionality. These components include Word Embeddings and Positional Encodings, Self-Attention (SA), Multi-Head Self-Attention (MHA), Feed Forward Networks (FFN), Layer Normalization, and Residual Connections. Together, they enable the model to process input sequences, capture contextual relationships, and generate meaningful outputs. We'll explore each of these components in detail to understand their purpose and implementation.
 
 ## Word Embeddings and Positional Encodings
 
@@ -178,29 +182,20 @@ Note that the input to the embedding layer is a sequence of token ids, and the o
 The implementation below considers the approach of jointly learning the positional encodings alongside the rest of the model components.
 
 ```python
-class EmbeddingEncoder(nn.Module):
-    def __init__(self, dim_embedding, vocab_size, context_size):
+class EmbeddingLayer(nn.Module):
+    def __init__(self, vocab_size, embedding_dim, context_length):
         super().__init__()
-        self.embedding_table = nn.Embedding(
-            vocab_size,
-            dim_embedding
-        )
-        self.positional_embedding_table = nn.Embedding(
-            context_size,
-            dim_embedding
-        )
-        self.context_size = context_size
+        self.word_embedding_layer = nn.Embedding(vocab_size, embedding_dim)
+        self.positional_encoding_layer = nn.Embedding(context_length, embedding_dim)
+
+        self.context_length = context_length
+        self.register_buffer("positions", torch.arange(self.context_length))
 
     def forward(self, x):
-        x_emb = self.embedding_table(x)
-        pos_emb = self.positional_embedding_table(
-            torch.arange(
-                self.block_size,
-                device=device
-              )
-            )
-        
-        return x_emb + pos_emb
+        word_emb = self.word_embedding_layer(x)
+        pos_emb = self.positional_encoding_layer(self.positions)
+
+        return word_emb + pos_emb
 ```
 
 ## Self-Attention (SA)
@@ -399,29 +394,14 @@ contextual_vector = [
 
 # this now represents the token that is associated with the query "husky"
 ```
-
-### Encoder vs. Decoder Layer
-While discussing Self-Attention, it's important to clarify the difference between how it operates in the encoder and decoder layers of the original Transformer architecture.
-
-The Transformer was introduced with two main components: the **encoder** and the **decoder**. The encoder processes the input sequence and learns a contextual representation, while the decoder generates the output sequence, conditioned on the encoder's output. This separation allows the model to handle tasks such as machine translation, where the input and output sequences may differ in length and content.
-
-- **Encoder:** Maps input tokens (e.g., in language $x$) into meaningful numerical features using self-attention. In the encoder, self-attention is **bidirectional**, meaning each token can attend to all other tokens in the sequence, regardless of their position (i.e., the way we've learned so far).
-- **Decoder:** Uses these features to generate output tokens (e.g., in language $y$). In the decoder, self-attention is **masked**. Each token can only attend to previous tokens and itself, preventing access to future tokens during generation.
-
-The decoder is important for generative tasks such as next token prediction. Given a sentence "The cat is chasing the", we want to predict the token "mouse". Note that, if we simply use the unmasked self-attention, we 
-
-Without masking, the decoder could cheat by attending to words th, which would make training unrealistic and hurt performance during actual sequence generation (like translation or text completion). Masking enforces the left-to-right, autoregressive nature of generation, making predictions fair and usable in real-world tasks.
-
-
-This separation is not required for all tasks. Some transformer variants use only the encoder (e.g., BERT for classification) or only the decoder (e.g., GPT for text generation), depending on the application.
-
-
-
 ### Masked Self-Attention
-Another important consideration is that the self-attention mechanism is slightly different in the encoder and in the decoder:
-- In the encoder, the SA allows tokens to attend to each other bi-directionally, meaning a token $x_i$ will attend both to previous and to following tokens.
-- In the decoder, the SA **does not** allow tokens to attend to future tokens. A token $x_i$ is only allowed to attend to tokens $x_j$ with $j \leq i$.
-- The two are calculated in the exact same way. However, for the decoder, we apply a mask to remove the influence of tokens from future time steps (i.e., set the values to $-\infty$).
+
+In tasks involving sequence generation (e.g., language modeling), it is important that the model does not have access to future tokens when predicting the current token. For example, consider the sentence:  
+> "The cat sat on the mat."
+
+When generating this sequence, the model should predict each word one at a time, without seeing the words that come after. When predicting "sat", the model can only use "The cat" as context, not "on the mat". If the model could see future tokens, it could simply copy them, making the task trivial and preventing it from learning meaningful language patterns.
+
+To "blind" the model from accessing future tokens, we use **masked self-attention**. In practice, we apply a mask to the attention matrix, setting the attention scores for future positions to $-\infty$ before applying softmax, which will set the weight of these tokens to $0$. As a result, any token $x_i$ can only use information from itself and previous tokens $x_j$ with $j \leq i$.
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
@@ -432,12 +412,68 @@ Another important consideration is that the self-attention mechanism is slightly
 <b>Figure 6:</b> Attention Matrix Masking (<a href="https://krypticmouse.hashnode.dev/attention-is-all-you-need">Source</a>).
 </div>
 
+We'll revisit the details of **encoder** and **decoder** blocks later, but for now, note that masked self-attention is only used in the **decoder**.
 
+### Implementation
+This implementation of SA can be used with and without a mask, depending on the parameter ```mask``` set on the forward method.
 
-Finally, the last missing component for this mechanism is the composition of multiple SA units into a single **Multi-Head Self-Attention (MHA)** unit.
-- Instead of having a single SA unit process the entire input vector, we define multiple SA units, and each unit will compute a piece of the vector.
-- For example, if we have a context size of $32$ and embeddings of dimensions $64$, a single self-attention head would output a matrix of dimension ($32 \times 64$).
-- Instead, we could define a MHA with $4$ heads, therefore each head will compute a matrix ($32 \times 16$). We then concatenate these matrixes over the embedding dimension, reconstructing the original dimension of $64$.
+```Python
+class AttentionHeadLayer(nn.Module):
+    def __init__(self, embedding_dim, head_size, context_window):
+        super().__init__()
+        self.head_size = head_size
+        self.w_k = nn.Linear(embedding_dim, head_size, bias=False)
+        self.w_q = nn.Linear(embedding_dim, head_size, bias=False)
+        self.w_v = nn.Linear(embedding_dim, head_size, bias=False)
+
+        # create an upper triangular matrix with boolean values
+        # [[False, True, True],
+        # [False, False, True],
+        # [False, False, False]]
+        triu_mask = torch.triu(
+            torch.ones(context_window, context_window), diagonal=1
+        ).to(torch.bool)
+
+        self.register_buffer("mask", triu_mask)
+        self.embedding_dim = embedding_dim
+
+    def forward(self, x, mask=False):
+        batch_size, window_size, emb_size = x.size()
+
+        k = self.w_k(x)
+        v = self.w_v(x)
+        q = self.w_q(x)
+
+        z = self.compute_contextual_vector(k, q, v, mask)
+
+        return z
+
+    def compute_contextual_vector(self, k, q, v, mask=False):
+        matmul = einops.einsum(
+            q,
+            k,
+            "batch len_q head, batch len_k head -> batch len_q len_k"
+        )
+        if mask:
+            matmul = torch.masked_fill(matmul, self.mask, -torch.inf)
+
+        attn_scores = nn.functional.softmax(matmul / self.embedding_dim**0.5, dim=-1)
+
+        contextual_vectors = einops.einsum(
+            attn_scores,
+            v,
+            "batch ctx_len_i ctx_len_j, batch ctx_len_i head -> batch ctx_len_j head"
+        )
+        return contextual_vectors
+```
+
+## Multi-Head Self-Attention (MHA)
+
+Transformers use **Multi-Head Self-Attention (MHA)** instead of a single self-attention unit. MHA enables the model to capture a richer set of relationships and patterns in the input sequence by running several attention operations in parallel. This allows the model to focus on different aspects of the input simultaneously.
+
+For example, in a sentence like "The cat sat on the mat," one attention head might focus on syntactic relationships, such as identifying that "cat" is the subject of "sat," while another head might focus on semantic relationships, such as associating "mat" with its spatial connection to "sat."
+
+The practical difference between a single self-attention unit and MHA lies in how the input embeddings are processed. In MHA, the input embedding is passed through multiple self-attention units in parallel. For instance, if we have an MHA with 4 self-attention units, each unit will output a contextual vector whose dimension is $1/4$ of the final contextual vector. These smaller contextual vectors are then concatenated to form the final contextual vector.
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
@@ -448,95 +484,56 @@ Finally, the last missing component for this mechanism is the composition of mul
 <b>Figure 7:</b> Multi-Head Self-Attention (MHA): Input sequence "I am a student" is processed through $4$ SA units with <i>embedding_dim</i> equals $2$. The attention values $a_0, a_1, a_2, a_3$ are concatenated to form the output with <i>embedding_dim</i> equals $8$ (<a href="https://velog.io/@joongwon00/딥러닝을-이용한-단백질-구조-예측-1.ProteinStructurePrediction">Source</a>).
 </div>
 
-**Motivation:** a single attention mechanism might struggle to capture all the intricate patterns in complex sequences due to its limited capacity. Multi-head attention mitigates this by distributing the learning task across multiple heads, reducing the risk of bottlenecks where certain crucial information might be missed or underrepresented. In other words, each head will learn a different latent space, and encode its specialized features into a segment of the final vector. Hopefully each of these segments will capture specialized characteristics of the data, as opposed to having a single vector space encoding everything as in the single SA unit.
+To ensure that the features from different heads are not confined to specific sections of the concatenated vector, this combined output is passed through a linear layer. This enables the model to learn how to combine the diverse information captured by each attention head, creating a more cohesive representation.
 
-### Implementation
 
+**Implementation**
 ```python
-class HeadAttention(nn.Module):
-    def __init__(
-        self,
-        block_size,
-        dim_embedding,
-        dim_head
-      ):
+class MultiHeadAttentionLayer(nn.Module):
+    def __init__(self, embedding_dim, n_heads, context_window):
         super().__init__()
 
-        self.dim_head = dim_head
-        self.dim_embedding = dim_embedding
-        
-        # It is conventional to remove the bias for these
-        self.key = nn.Linear(
-            dim_embedding,
-            dim_head,
-            bias=False
-          )
-        self.query = nn.Linear(
-            dim_embedding,
-            dim_head,
-            bias=False
-          )
-        self.value = nn.Linear(
-            dim_embedding,
-            dim_head,
-            bias=False
-          )
-        
-        # a register_buffer saves this variable in the model
-        # params, but they are not considered trainable
-        # parameters. can access the variable with self.mask
-        self.register_buffer(
-            "mask", torch.tril(
-                torch.ones(block_size, block_size)
-          ))
-        
-    def forward(self, x):
-        k = self.key(x)
-        q = self.query(x)
-        v = self.value(x)
+        head_dim = embedding_dim // n_heads
 
-        prod = q @ k.transpose(-2, -1) * self.dim_head**-0.5
-        prod = prod.masked_fill(self.mask == 0, float("-inf"))
-        prod = F.softmax(prod, dim=-1)
-        
-        out = prod @ v
-        return out
-
-class MultiHeadAttention(nn.Module):
-    def __init__(
-        self,
-        block_size,
-        num_heads,
-        dim_head,
-        dim_embedding
-      ):
-        super().__init__()
-
-        self.head_list = nn.ModuleList(
-            [
-                HeadAttention(
-                    block_size,
-                    dim_embedding,
-                    dim_head,
-                  ) for _ in range(num_heads)]
+        self.attn_head_list = nn.ModuleList(
+            AttentionHeadLayer(
+                embedding_dim,
+                head_dim,
+                context_window
+            ) for _ in range(n_heads)
         )
-        self.proj = nn.Linear(dim_embedding, dim_embedding)
+        self.ff_layer = nn.Linear(embedding_dim, embedding_dim)
 
-    def forward(self, x):
+    def forward(self, x, mask=False):
         out = torch.cat(
-            [head(x) for head in self.head_list],
-            dim=-1
-          )
-        out = self.proj(out)
-        
+            [attn_head(x, mask=mask) for attn_head in self.attn_head_list], dim=-1
+        )
+        out = self.ff_layer(out)
+
         return out
 ```
 
-## Feed Forward / Multi-layer Perceptron (MLP)
 
-Up to now, all the operations performed are linear transformations: matrix multiplications, softmax, addition. To add non-linearity, we simply put a feed forward network with a non-linear activation after the MHA layer.
+## Point-Wise Feed Forward Network (FFN)
 
-This is usually a very shallow network with only $1$ hidden layer with a ReLU / GeLU / etc. activation function. It is also common to do an up projection and a down projection in the hidden layer, meaning the input gets stretched to a higher dimensional space when entering the hidden unit, then gets down projected to the original size after leaving the hidden unit.
+Up to now, all operations performed are linear transformations (e.g., matrix multiplications). Linear functions are those where the output grows proportionately to the input. For example, in a function like $y = 2x$, doubling the input $x$ will double the output $y$.
+
+Although we are performing several of these operations sequentially, the combination of multiple linear operations remains linear.
+
+However, most real-world problems involve non-linear relationships that cannot be captured by linear transformations alone, such as:
+
+- **Exponentials:** $y = 2^x$, doubling the input quadruples the output.
+- **Quadratics:** $y = x^2$, doubling the input increases the output by a factor of four.
+- **Sinusoids:** $y = \sin(x)$, where the output oscillates periodically and does not grow linearly with the input.
+- **Logarithms:** $y = \log(x)$, where the output grows slower as the input increases.
+- **Piecewise Functions:** $$y = \begin{cases} x & \text{if } x < 0 \\ x^2 & \text{if } x \geq 0 \end{cases}$$, where the behavior changes depending on the input range.
+- **Step Functions:** $y = \text{step}(x)$, where the output jumps abruptly at certain input values.
+
+By introducing non-linear **activation functions** such as ReLU, sigmoid, or tanh, the model can capture non-linear relationships, enabling it to approximate more complex mappings between inputs and outputs.
+
+To introduce non-linearity, we use a **point-wise feed forward network with a non-linear activation function**, such as ReLU, applied after the MHA layer.
+
+This consists of two linear layers that perform an up projection followed by a down projection, meaning the input gets stretched to a higher dimensional space, then gets down projected to the original size after leaving the hidden unit.
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
@@ -544,25 +541,20 @@ This is usually a very shallow network with only $1$ hidden layer with a ReLU / 
     </div>
 </div>
 <div class="caption">
-<b>Figure 10:</b> Multi-Layer Perceptron: Input gets up projected from $3$ to $4$ dimensions, then down projected back from $4$ to $3$ dimensions. Source: Garg, Siddhant & Ramakrishnan, Goutham. (2020) <d-cite key="garg-ramakrishnan-2020-advances"></d-cite>.
+<b>Figure 8:</b> Point-Wise Feed Forward Network: Input gets up projected from $3$ to $4$ dimensions, then down projected back from $4$ to $3$ dimensions. Source: Garg, Siddhant & Ramakrishnan, Goutham. (2020) <d-cite key="garg-ramakrishnan-2020-advances"></d-cite>.
 </div>
 
 ### Implementation
 
 ```python
-class MLP(nn.Module):
-    def __init__(
-        self,
-        dim_head,
-        dim_embedding,
-      ):
+class PointWiseFFNLayer(nn.Module):
+    def __init__(self, dim_embedding):
         super().__init__()
-        # increase the dimension by 4
-        # then bring it back to the original size
+
         self.net = nn.Sequential(
-            nn.Linear(dim_head, 4*dim_embedding),
+            nn.Linear(dim_embedding, dim_embedding*4),
             nn.ReLU(),
-            nn.Linear(4*dim_embedding, dim_embedding)
+            nn.Linear(dim_embedding*4, dim_embedding),
         )
 
     def forward(self, x):
@@ -571,96 +563,74 @@ class MLP(nn.Module):
         return out
 ```
 
-## Batch Normalisation
+## Layer Normalization
 
-Batch normalisation is a procedure that helps stabilise and accelerate the training process by reducing internal covariate shift, which refers to the change in the distribution of layer inputs during training. It consists in normalising the outputs of the layers so that their distribution have a mean of $0$ and a variance of $1$, then applying two learned parameters to scale and shift the distribution. This reduces the chance that gradients explode or vanish (grow or shrink exponentially). This is a key engineering component in ensuring that large and deep neural networks can converge in a stable fashion.
+Layer normalization is a procedure that helps stabilise and accelerate the training process by reducing **internal covariate shift**. Internal covariate shift means the distribution of inputs to a layer changes during training as the parameters of the previous layers are updated.
 
-To normalise an input batch, we scale it in this fashion:
+Suppose the first layer outputs values with a mean of $0$ and a variance of $1$ at the start of training. After a few optimization steps, the outputs shift to have a mean of $5$ and a variance of $10$. The second layer, which was initially trained to expect inputs centered around $0$ with a small variance, now receives inputs that are drastically different. This forces the second layer to adapt its weights, slowing down training and destabilizing the optimization process.
+
+Layer normalization addresses this issue by normalizing the outputs of the layers so that their distribution have a mean of $0$ and a variance of $1$. It also learns two parameters $\gamma$ and $\beta$ to scale and shift the distribution if needed. This is a key engineering component in ensuring that large and deep neural networks can converge in a stable fashion.
+
+<div class="row mt-3" style="max-width: 70%; height: auto; margin: 0 auto;">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/attention-covariate-shift.png" class="img-fluid rounded z-depth-1" %}
+    </div>
+</div>
+<div class="caption">
+<b>Figure 9:</b> Before layer normalization, the activations exhibit significantly varying distributions. After normalization, the distributions are aligned and much closer to each other (<a href="https://e2eml.school/batch_normalization">Source</a>).
+</div>
+
+To normalize the input features, we scale them as follows:
 
 $$
-\hat{x}_i = \frac{x_i - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}}
+\hat{x}_i = \frac{x_i - \mu_i}{\sqrt{\sigma_i^2 + \epsilon}}
 $$
 
-where $\mu_B$ is the mean of the mini-batch, $\sigma_B^2$ is the variance of the mini-batch, and $\epsilon$ is a small constant added for numerical stability.
+Where:
+- $x_i$ is the $i$-th feature for input $x$.
+- $\mu_i$ is the mean of the input features for the $i$-th dimension.
+- $\sigma_i^2$ is the variance of the input features for the $i$-th dimension.
+- $\epsilon$ is a small constant added for numerical stability.
+- $\hat{x}_i$ is the normalized feature for the $i$-th dimension.
 
-Next, we define two learnable parameters gamma and beta to allow the model to reconstruct the original (non-scaled) distribution, if needed:
+After normalization, the output is scaled and shifted using learnable parameters $\gamma$ (scale) and $\beta$ (shift):
 
 $$
-out = \gamma \hat{x}_i + \beta
+y_i = \gamma \hat{x}_i + \beta
 $$
 
-If the learned $\gamma$ is equal to $1$ and the learned $\beta$ is equal to $0$, this layer is simply normalising the input to mean $0$ and variance $1$. However, the model may learn other parameters that allows it to scale and shift the distribution as it pleases.
+This ensures that the model can learn to adjust the normalized values as needed.
 
 ### Implementation
 
 ```python
-class BatchNorm(nn.Module):
-    def __init__(
-        self,
-        embedding_dim,
-        eps=1e-5,
-        momentum=0.1
-      ):
-        super(BatchNorm, self).__init__()
-        self.embedding_dim = embedding_dim
-        self.eps = eps
-        self.momentum = momentum
+class LayerNorm(nn.Module):
+    def __init__(self, embedding_dim):
+        super().__init__()
+
         self.gamma = nn.Parameter(torch.ones(embedding_dim))
         self.beta = nn.Parameter(torch.zeros(embedding_dim))
-        
-        # Initialize running mean and variance
-        self.register_buffer(
-            'running_mean',
-            torch.zeros(embedding_dim)
-          )
-        self.register_buffer(
-            'running_var',
-            torch.ones(embedding_dim)
-          )
+
+        self.eps = 1e-5
 
     def forward(self, x):
-        # mean and var are only updated in training
-        if self.training:
-            batch_mean = x.mean(keepdim=True)
-            batch_var = x.var(unbiased=False, keepdim=True)
-            
-            # Update running statistics
-            self.running_mean = (
-                (1 - self.momentum) * 
-                self.running_mean + 
-                self.momentum * 
-                batch_mean
-              )
-            self.running_var = (
-                (1 - self.momentum) *
-                self.running_var + 
-                self.momentum * 
-                batch_var
-             )
-        # stored mean and variance are used in inference
-        else:
-            batch_mean = self.running_mean
-            batch_var = self.running_var
+        mean = x.mean(dim=-1, keepdim=True)
+        var = x.var(dim=-1, keepdim=True, unbiased=False)
+
         
-        # Normalise to mean 0 variance 1
-        x_hat = (
-            (x - batch_mean) /
-            torch.sqrt(batch_var + self.eps)
-          )
-        
-        # Scale and shift the distribution
-        out = self.gamma * x_hat + self.beta
-        
-        return out
+        norm_x = (x-mean) / (var**2 + self.eps)**1/2
+        scaled_shifted_x = self.gamma * norm_x + self.beta
+
+        return scaled_shifted_x
 ```
 
 ## Residual Connections
 
-Residual connections were introduced by He et al. (2015) <d-cite key="he-2016-deep"></d-cite>. It is a technique to address the problem of vanishing gradients and to make it easier to train very deep neural networks.
+Residual connections were introduced by He et al. (2015) <d-cite key="he-2016-deep"></d-cite> to address the problem of **vanishing gradients**.
 
-As neural networks become deeper, gradients can become very small during backpropagation, making it difficult to update the weights of earlier layers effectively. This can lead to very slow convergence or even stopping learning altogether.
+When updating weights, the gradients are multiplied by the weights of each layer. If these weights are small (i.e., close to zero), the gradients shrink as they propagate backward through many layers, eventually approaching zero, which makes earlier layers effectively stop learning.
 
-Residual connections address these issues by allowing the gradient to flow directly through the network, making it easier to train deep networks. They work by adding the input of a layer to its output, effectively allowing the network to learn a residual mapping (identity function).
+Residual connections help mitigate this problem by allowing gradients to bypass layers, preserving their magnitude. This is done simply by summing the input of a given layer with it's output. 
 
 <div class="row mt-3" style="max-width: 80%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
@@ -668,13 +638,11 @@ Residual connections address these issues by allowing the gradient to flow direc
     </div>
 </div>
 <div class="caption">
-<b>Figure 11:</b> Residual Connection in a feed forward neural network. The input $X$ branches in two directions: the first direction goes into the MLP and is processed normally. The other direction skips the MLP completely, (i.e., the input is not changed at all). Both branches are aggregated afterwards. Source: He, Kaiming, et al. (2016) <d-cite key="he-2016-deep"></d-cite>.
+<b>Figure 11:</b> Residual Connection in a feed forward neural network. The input $X$ branches in two directions: the first direction goes into the layer and is processed normally. The other direction skips the layer completely, (i.e., the input is not changed at all). Both branches are aggregated afterwards. Source: He, Kaiming, et al. (2016) <d-cite key="he-2016-deep"></d-cite>.
 </div>
 
-For very deep neural nets, at some point the data transformations being applied to the input are not beneficial anymore, and performance starts decreasing. To fix this, residual connections allow some layers to simply learn "nothing", i.e. learn to pass the input as the output without modifying it whatsoever (i.e., learn the identity function). With this approach, scaling the network should never hurt performance, as it can simply stop learning new functions if needed.
 
 ### Implementation
-
 ```python
 class GenericLayer(nn.Module):
     def __init__(self):
@@ -689,120 +657,169 @@ class GenericLayer(nn.Module):
         return out
 ```
 
-# Implementation
+# Full Implementation with Practical Example
 
 Check this [google collab](https://colab.research.google.com/drive/1FONo7C6lrhkPSaq5TFLeQ14lWMMisW0e?usp=sharing) to test the architecture with a practical example borrowed from [Andrej Karpathy's lecture series](https://youtu.be/kCc8FmEb1nY).
 
 ```python
-# Source: adapted from https://youtu.be/kCc8FmEb1nY
-class Head(nn.Module):
-    """One head of self-attention."""
-
-    def __init__(self, head_size):
+class AttentionHeadLayer(nn.Module):
+    def __init__(self, embedding_dim, head_size, context_window):
         super().__init__()
-        self.key = nn.Linear(n_embd, head_size, bias=False)
-        self.query = nn.Linear(n_embd, head_size, bias=False)
-        self.value = nn.Linear(n_embd, head_size, bias=False)
-        self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
-        self.dropout = nn.Dropout(dropout)
+        self.head_size = head_size
+        self.w_k = nn.Linear(embedding_dim, head_size, bias=False)
+        self.w_q = nn.Linear(embedding_dim, head_size, bias=False)
+        self.w_v = nn.Linear(embedding_dim, head_size, bias=False)
 
-    def forward(self, x):
-        B, T, C = x.shape
-        k = self.key(x)   # (B, T, C)
-        q = self.query(x) # (B, T, C)
-        wei = q @ k.transpose(-2, -1) * C**-0.5  # (B, T, T)
-        wei = wei.masked_fill(self.tril[:T, :T] == 0, float('-inf'))  # (B, T, T)
-        wei = F.softmax(wei, dim=-1) # (B, T, T)
-        wei = self.dropout(wei)
-        v = self.value(x) # (B, T, C)
-        out = wei @ v # (B, T, C)
+        self.register_buffer("mask", torch.triu(torch.ones(context_window, context_window), diagonal=1).to(torch.bool))
+        self.embedding_dim = embedding_dim
+
+    def forward(self, x, mask=False):
+        batch_size, window_size, emb_size = x.size()
+
+        k = self.w_k(x)
+        v = self.w_v(x)
+        q = self.w_q(x)
+
+        z = self.compute_contextual_vector(k, q, v, mask)
+
+        return z
+
+    def compute_contextual_vector(self, k, q, v, mask=False):
+        # Q @ K.T -> i j k @ i m k -> i j m
+        matmul = einops.einsum(q, k, "batch len_q head, batch len_k head -> batch len_q len_k")
+        if mask:
+            matmul = torch.masked_fill(matmul, self.mask, -torch.inf)
+
+        attn_scores = nn.functional.softmax(matmul / self.embedding_dim**0.5, dim=-1)
+
+        # attn_scores @ v -> i j m x i j k -> i m k
+        contextual_vectors = einops.einsum(
+            attn_scores,
+            v,
+            "batch ctx_len_i ctx_len_j, batch ctx_len_i head -> batch ctx_len_j head"
+        )
+        return contextual_vectors
+
+class MultiHeadAttentionLayer(nn.Module):
+    def __init__(self, embedding_dim, n_heads, context_window):
+        super().__init__()
+
+        head_dim = embedding_dim // n_heads
+
+        self.attn_head_list = nn.ModuleList(
+            AttentionHeadLayer(embedding_dim, head_dim, context_window) for _ in range(n_heads)
+        )
+        self.ff_layer = nn.Linear(embedding_dim, embedding_dim)
+
+    def forward(self, x, mask=False):
+        out = torch.cat([attn_head(x, mask=mask) for attn_head in self.attn_head_list], dim=-1)
+        out = self.ff_layer(out)
+
         return out
 
-class MultiHeadAttention(nn.Module):
-    """Multiple heads of self-attention in parallel."""
-
-    def __init__(self, num_heads, head_size):
+class FeedForwardLayer(nn.Module):
+    def __init__(self, dim_embedding):
         super().__init__()
-        self.heads = nn.ModuleList([Head(head_size) for _ in range(num_heads)])
-        self.proj = nn.Linear(n_embd, n_embd)
-        self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x):
-        out = torch.cat([h(x) for h in self.heads], dim=-1)
-        out = self.dropout(self.proj(out))
-        return out
-
-class FeedForward(nn.Module):
-    """A simple linear layer followed by a non-linearity."""
-
-    def __init__(self, n_embd):
-        super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(n_embd, 4 * n_embd),
+            nn.Linear(dim_embedding, dim_embedding*2),
             nn.ReLU(),
-            nn.Linear(4 * n_embd, n_embd),
-            nn.Dropout(dropout),
+            nn.Linear(dim_embedding*2, dim_embedding),
         )
 
     def forward(self, x):
-        return self.net(x)
+        out = self.net(x)
 
-class Transformer(nn.Module):
-    """A decoder-only transformer block."""
+        return out
 
-    def __init__(self, n_embd, n_head):
+class LayerNormLayer(nn.Module):
+    def __init__(self, embedding_dim):
         super().__init__()
-        head_size = n_embd // n_head
-        self.sa = MultiHeadAttention(n_head, head_size)
-        self.ffwd = FeedForward(n_embd)
-        self.ln1 = nn.LayerNorm(n_embd)
-        self.ln2 = nn.LayerNorm(n_embd)
+
+        self.layernorm = nn.LayerNorm(embedding_dim)
 
     def forward(self, x):
-        x = x + self.sa(self.ln1(x))
-        x = x + self.ffwd(self.ln2(x))
-        return x
+        out = self.layernorm(x)
 
-class BigramLanguageModel(nn.Module):
-    """Bigram language model using transformers."""
+        return out
 
-    def __init__(self):
+class DecoderBlock(nn.Module):
+    def __init__(self, embedding_dim, n_attn_heads, context_window):
         super().__init__()
-        self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
-        self.position_embedding_table = nn.Embedding(block_size, n_embd)
-        self.blocks = nn.Sequential(*[Block(n_embd, n_head=n_head) for _ in range(n_layer)])
-        self.ln_f = nn.LayerNorm(n_embd) # Final layer norm
-        self.lm_head = nn.Linear(n_embd, vocab_size)
 
-    def forward(self, idx, targets=None):
-        B, T = idx.shape
-        tok_emb = self.token_embedding_table(idx) # (B, T, C)
-        pos_emb = self.position_embedding_table(torch.arange(T, device=device)) # (T, C)
-        x = tok_emb + pos_emb # (B, T, C)
-        x = self.blocks(x) # (B, T, C)
-        x = self.ln_f(x) # (B, T, C)
-        logits = self.lm_head(x) # (B, T, vocab_size)
-        if targets is None:
-            loss = None
-        else:
-            B, T, C = logits.shape
-            logits = logits.view(B*T, C)
-            targets = targets.view(B*T)
-            loss = F.cross_entropy(logits, targets)
-        return logits, loss
+        self.mha_layer = MultiHeadAttentionLayer(embedding_dim, n_attn_heads, context_window)
+        self.layernorm_mha = LayerNormLayer(embedding_dim)
 
+        self.ffn_layer = FeedForwardLayer(dim_embedding)
+        self.layernorm_ffn = LayerNormLayer(embedding_dim)
+        self.dropout = nn.Dropout(0.1)
+
+
+    def forward(self, x):
+        norm_x = self.layernorm_mha(x)
+        out = self.mha_layer(norm_x, mask=True)
+        x = x + self.dropout(out)
+
+        norm_x = self.layernorm_ffn(x)
+        out = self.ffn_layer(norm_x)
+        x = x + self.dropout(out)
+
+        return out
+
+class CLFHead(nn.Module):
+    def __init__(self, embedding_dim, vocab_size):
+        super().__init__()
+
+        self.clf_head = nn.Linear(embedding_dim, vocab_size)
+
+    def forward(self, x):
+        out = self.clf_head(x)
+
+        return out
+
+class DecoderTransformer(nn.Module):
+    def __init__(self, vocab_size, context_length, embedding_dim, n_attn_heads, num_trf_blocks):
+        super().__init__()
+
+        self.emb_layer = EmbeddingLayer(vocab_size, embedding_dim, context_length)
+        self.trf_blocks = nn.Sequential(
+            *[DecoderBlock(
+                embedding_dim,
+                n_attn_heads,
+                context_length) for _ in range(num_trf_blocks)
+            ]
+        )
+        self.clf_head = CLFHead(embedding_dim, vocab_size)
+
+    def forward(self, x, y=None):
+        out = self.emb_layer(x)
+        out = self.trf_blocks(out)
+        out = self.clf_head(out)
+
+        loss = None
+        if y is not None:
+            # This rearranging is needed because pytorch's CE loss expects a 2D vector for logits
+            out = einops.rearrange(out, "b t c -> (b t) c")
+            y = einops.rearrange(y, "b t -> (b t)")
+            loss = nn.functional.cross_entropy(out, y)
+
+        return out, loss
+
+    @torch.nograd()
     def generate(self, idx, max_new_tokens):
         for _ in range(max_new_tokens):
             idx_cond = idx[:, -block_size:]
             logits, _ = self(idx_cond)
-            logits = logits[:, -1, :] # (B, C)
-            probs = F.softmax(logits, dim=-1) # (B, C)
+            logits = logits[:, -1, :]
+            probs = F.softmax(logits, dim=-1)
             idx_next = torch.multinomial(probs, num_samples=1)
-            idx = torch.cat((idx, idx_next), dim=1) # (B, T+1)
+            idx = torch.cat((idx, idx_next), dim=1)
         return idx
 ```
 
-# Variations
+# Architecture Variations
+In this post I've only discussed the decoder-only transformer architecture. A brief presentation of the other variations can be found below.
+
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
