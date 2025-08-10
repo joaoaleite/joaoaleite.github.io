@@ -89,7 +89,7 @@ Transformers process sequential data (e.g., language), and excel at tasks where 
 # Motivation
 The motivation behind the transformer architecture stems from the limitations of earlier sequence-to-sequence models based on Recurrent Neural Networks (RNNs).
 
-RNNs encode contextual information from previous time steps into "state vectors" that are updated at each step. This approach leads to the state vector being significantly altered with each new input, causing the model to quickly lose information about earlier context in long sequences.
+RNNs process sequences step-by-step, one token at a time. At each time step, the input token $x_t$ passes through the network, producing two outputs: an output token $o_t$ and a **state vector** $h_t$. For the next time step, the following input token $x_{t+1}$ is processed together with the previous state vector $h_t$, which is updated to $h_{t+1}$. The state vector carries **context** from previous steps, allowing the model to retain information from earlier tokens as it processes each new token. However, with each new input, the state vector is slightly changed, causing the model to gradually lose information about earlier context in long sequences. It is as if the model had to "free up space" from previous iterations to be able to store information from more recent tokens.
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
@@ -113,11 +113,10 @@ Other variations of RNNs attempt to mitigate this issue. For example, Gated Recu
 Although these mechanisms help, the fundamental architectural issues associated with sequential processing still persist:
 
 - **Information loss over long contexts:** For long sequences, the state vector gradually loses information from earlier time steps, which are overwritten by information from later time steps.
-- **Compute inefficiency due to non-parallelizable operations:** To generate a token $o_t$ at time step $t$, all previous inputs $x_i$ for $i < t$ must be processed sequentially. This lack of parallelism makes computation prohibitively inefficient when training on extremely large datasets.
+- **Compute inefficiency due to non-parallelizable operations:** To generate a token $o_t$ at time step $t$, all previous inputs $x_i$ for $i < t$ must be processed sequentially. This lack of parallelism makes computation extremely inefficient when training on extremely large models and datasets.
 
-# Core Idea
-The core component powering the transformer architecture is the **Self-Attention (SA)** mechanism. Instead of relying on a state vector that is updated step by step, self-attention allows every token in a sequence to directly "attend" to all other tokens at once. This means that, for any token $x_t$, the model can consider the context of all tokens $x_i$ (for all $i$) simultaneously, rather than sequentially. This overcomes the information loss over long contexts that occurs in RNNs.
-
+# Transformer's Core Concept: Self-Attention
+The core component powering the transformer architecture is the **Self-Attention (SA)** mechanism. Instead of relying on a state vector that is countinuously updated at each time step, self-attention allows every token in the sequence to  **"attend"** to (i.e., be influenced by) all other tokens directly, in parallel. This means that any token $x_t$ can consider the context of all tokens $x_i$ (for all $i$) simultaneously. This overcomes the information loss over long contexts that occurs in RNNs.
 
 <div class="row mt-3" style="max-width: 50%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
@@ -130,13 +129,15 @@ The core component powering the transformer architecture is the **Self-Attention
 
 Additionally, because attention is computed in parallel across the entire sequence using highly efficient matrix operations, modern hardware such as GPUs and TPUs can be leveraged to greatly accelerate both training and inference, enabling training larger models on bigger datasets.
 
+This solves the two major shortcomings of RNNs that we've discussed previously.
+
 However, this design shift in the architecture from RNNs to self-attention, does not come only with benefits. The self-attention mechanism has important drawbacks in comparison to RNNs:
 - <b>Quadratic computational complexity</b>: For a sequence of length $N$, this requires computing an $N{\times}N$ attention matrix. This leads to a computational and memory complexity of $O(N^2)$, i.e., doubling the input length quadruples the necessary computation. In contrast, RNNs have a linear complexity of $O(N)$, i.e., doubling the input length also doubles the necessary computation. This quadratic scaling makes processing very long sequences expensive.
 - <b>Fixed-size sequence length</b>: A direct consequence of the quadratic complexity is that Self-Attention must operate on a fixed-length context window. All input sequences are truncated or padded to a predefined maximum length (e.g., 512 tokens). This prevents the model from processing sequences of arbitrary length, a task that RNNs can handle naturally due to their step-by-step processing.
 
-The Self-Attention mechanism is the core of the Transformer architecture, but other components are essential for it to function in practice. Next, we will discuss each component in greater detail.
+The Self-Attention mechanism is the core of the Transformer architecture, but other components are essential for it to function properly. Next, we will discuss each component in greater detail.
 
-# Components
+# Components of the Transformer Architecture
 
 ## Word Embeddings and Positional Encodings
 
@@ -166,7 +167,7 @@ To address this, we introduce positional encodings that explicitly encode the or
     </div>
 </div>
 <div class="caption">
-<b>Figure 9:</b> Sinusoidal positional encodings (<a href="https://towardsdatascience.com/understanding-positional-encoding-in-transformers-dc6bafc021ab">Source</a>).
+<b>Figure 6:</b> Sinusoidal positional encodings (<a href="https://towardsdatascience.com/understanding-positional-encoding-in-transformers-dc6bafc021ab">Source</a>).
 </div>
 
 The final input to the transformer block is the element-wise sum of the word embeddings and the positional encodings, allowing the model to capture both semantic meaning and positional information.
@@ -204,26 +205,32 @@ class EmbeddingEncoder(nn.Module):
 
 ## Self-Attention (SA)
 
-As discussed previously, the Self-Attention mechanism enables each token in the input sequence to attend to every other token, allowing the model to capture long-range dependencies (see **Figure 4**).
+The goal of the self-attention mechanism is to transform each input token's static embeddings into **contextual embeddings** that incorporate the semantics of other tokens in the sequence. As discussed previously, SA achieves this by allowing any token in the input sequence to influence any other token directly, allowing the model to capture dependencies regardless of their distance in the sequence. (see **Figure 4**).
 
-The goal of self-attention is to learn the relative importance between all pairs of tokens in the sequence. To achieve this, the model computes "attention scores" in the form of a square matrix of size $N{\times}N$, where $N$ is the sequence length, and each entry in the matrix represents how much attention token $i$ should pay to token $j$.
+### Example: Static vs. Contextual Embeddings
 
-<div class="row mt-3" style="max-width: 50%; height: auto; margin: 0 auto;">
-    <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/attention-matrix.png" class="img-fluid rounded z-depth-1" %}
-    </div>
-</div>
-<div class="caption">
-<b>Figure 6</b>: Attention scores for an input sequence "Hello I love you". (<a href="https://theaisummer.com/attention/">Source</a>)
-</div>
+Suppose the input token is **"bat"**. Its static embedding might encode general characteristics such as: "is an animal", "is associated with flying", and "is a nocturnal creature". This embedding remains unchanged regardless of context.
 
-With this goal in mind, let's take a step back to understand how to frame this problem in such a way that the model can learn how to produce the attention scores. We can represent each token in the sequence using three distinct feature vectors: queries ($Q$), keys ($K$), and values ($V$). Intuitively, the kind of information that we want to encode into these vectors are:
+Now consider the same token "bat" in the context of this sentence:  
+> "He swung the bat and hit a home run."
+
+Here, the surrounding tokens **"swung"**, **"hit"**, and **"home run"** provide context that shifts the meaning of **"bat"**. Through self-attention, the contextual embedding for **"bat"** will incorporate features like: "is a piece of sports equipment", "is used in baseball", and "is something to swing and hit a ball"
+
+Now, the contextual vector for **"bat"** reflects the specific meaning in the context of this sentence, which is defined by the other tokens in the sentence.
+
+Note that in order to determine the contextual meaning of "bat" in the sentence, this token needs to identify two things:
+> 1. Which tokens in the sequence are most relevant to me?
+> 2. How much information from each token should I incorporate?
+
+### Implementing Self-Attention
+
+Each token's static embedding will be transformed into three different vectors: **query**, **key**, and **value**. They can be interpreted in the following manner:
 
 - **Query:** What features am I searching for in other tokens? (What am I looking for?)
 - **Key:** What features do I present to other tokens, so they can determine if I am relevant to them? (How do I describe myself to others?)
 - **Value:** What information do I carry that should be shared if another token attends to me? (What do I represent?)
 
-In practice, we learn these features in the following manner: we randomly initialize three weight matrices: Key ($W_K$), Query ($W_Q$), and Value ($W_V$) matrices. Each of these matrices will multiply the input sentence embedding matrix to obtain the keys, queries, and values $Q$, $K$, and $V$, respectively.
+We define three weight matrices (i.e., linear layers): Key ($W_K$), Query ($W_Q$), and Value ($W_V$). Each of these matrices will multiply the input sentence embedding matrix to obtain $Q$, $K$, and $V$.
 
 <div class="row mt-3" style="max-width: 80%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
@@ -234,7 +241,7 @@ In practice, we learn these features in the following manner: we randomly initia
 <b>Figure 7:</b> Keys, Queries, and Values: Three randomly initialized matrices multiply the input embedding to obtain the Keys, Queries, and Values for that particular input sequence (<a href="https://epichka.com/blog/2023/qkv-transformer/">Source</a>).
 </div>
 
-Now to obtain the attention scores, we apply the following equation:
+Now to obtain the contextual embeddings, we apply the following equation:
 
 $$
 \begin{equation}\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right) V\end{equation} 
@@ -242,8 +249,8 @@ $$
 
 Let's break the equation down step-by-step. 
 
-### Dot Product ($QK^T$)
-Let's ignore the term $\sqrt{d_k}$ for now. Remember the intuitive meaning of $Q$ (What am I looking for?) and $K$ (How do I describe myself to others?). When we perform a dot-product between $Q$ and $K^T$, we are essentially computing a similarity score between the two features. If ${Q_i}{\cdot}{K_j}^T$ is high, it means that token $j$ has the kind of features that token $i$ is looking for. Let's illustrate this with an example.
+#### Dot Product ($QK^T$)
+Let's ignore the term $\sqrt{d_k}$ for now. Remember the intuitive meaning of $Q$ (What am I looking for?) and $K$ (How do I describe myself to others?). When we perform a dot-product between $Q$ and $K^T$, we are essentially computing a similarity score between the two features. If ${Q_i}K^T_j$ is high, it means that token $j$ has the kind of features that token $i$ is looking for. Let's illustrate this with an example.
 
 Imagine we have three tokens from the sentence "The cats are chasing the mouse": **chasing**, **cat**, and **mouse**. For the self-attention mechanism, each token generates Query, Key, and Value vectors. Here, we'll focus on how **chasing** computes attention scores with respect to **cat** and **mouse**.
 
@@ -255,9 +262,9 @@ Let's assume the following Query and Key vectors have been generated:
 
 ---
 
-#### 1. Score: `chasing` → `cat`
+##### 1. Score: **chasing** → **cat**
 
-We compute the dot product of the query from `chasing` and the key from `cat`.
+We compute the dot product of the query from **chasing** and the key from **cat**.
 
 $Q_{chasing} \cdot K_{cat} = [-2.0, 3.0, 2.5, -1.0, 1.5, -2.0] \cdot [-1.8, 2.8, 3.0, 0.2, 2.5, -1.5]$
 
@@ -275,9 +282,9 @@ $$3.6 + 8.4 + 7.5 - 0.2 + 3.75 + 3.0 = \textbf{26.05}$$
 
 ---
 
-#### 2. Score: `chasing` → `mouse`
+##### 2. Score: **chasing** → **mouse**
 
-Next, we compute the dot product of the query from `chasing` and the key from `mouse`.
+Next, we compute the dot product of the query from **chasing** and the key from **mouse**.
 
 $Q_{chasing} \cdot K_{mouse} = [-2.0, 3.0, 2.5, -1.0, 1.5, -2.0] \cdot [-1.5, -2.0, 2.8, -0.5, -2.0, 3.0]$
 
@@ -293,12 +300,13 @@ The step-by-step multiplication reveals significant disagreement:
 The final similarity score reflects this poor alignment:
 $$3.0 - 6.0 + 7.0 + 0.5 - 3.0 - 6.0 = \textbf{-4.5}$$
 
-The high positive score for **cat** and the negative score for **mouse** indicate that "cat" is far more relevant to "chasing" in this context. Let's continue on to the next part of the equation.
+The high positive score for **cat** and the negative score for **mouse** indicate that "cat" is far more relevant to "chasing" in this context.
+
+Let's continue on to the next part of the equation.
 
 
-### Softmax
-
-The Softmax function takes the unbounded $(-\inf, +\inf)$ scores obtained from the dot product, and turns them into a probability distribution ($[0, 1]$, summing to $1$). This gives us the actual attention scores (see **Figure 6**).
+#### Softmax
+The Softmax function transforms the raw attention scores (ranging from $-\infty$ to $+\infty$) into a normalized probability distribution over all tokens in the sequence. Each score is exponentiated and divided by the sum of all exponentiated scores, resulting in values between $0$ and $1$ that sum to $1$. This ensures that the most relevant tokens receive higher weights, while less relevant tokens are assigned lower weights, allowing the model to focus its attention appropriately.
 
 <div class="row mt-3" style="max-width: 80%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
@@ -309,25 +317,34 @@ The Softmax function takes the unbounded $(-\inf, +\inf)$ scores obtained from t
 <b>Figure 8:</b> Softmax (<a href="https://www.mdpi.com/2076-3417/13/23/12784">Source</a>).
 </div>
 
-Note that the softmax functions does exactly what its name suggests: a soft version of a max function. With a max function, we would get a $1$ for the largest element in the sequence, and $0$ for everything else. With softmax, we want the highest values to accumulate most of the probability distribution, with smaller values being close to $0$.
+Note that the softmax functions does exactly what its name suggests: a soft version of a max function. With a max function, we would get a $1$ for the largest element in the sequence, and $0$ for everything else. With softmax, we want the highest values to accumulate most of the probability mass, with smaller values being close to $0$.
 
-### The Scaling Factor ($\sqrt{d_k}$)
+#### The Scaling Factor ($\sqrt{d_k}$)
 
-The reason to introduce the scaling factor $\sqrt{d_k}$ is because of how the dot product and the softmax function behave. Dot products can grow large, especially with high-dimensional vectors. Large inputs can push the Softmax function into regions where its gradient is almost zero, which makes training unstable. Scaling mitigates this issue by ensuring the input to the softmax function is not extremely large.
+The reason to introduce the scaling factor $\sqrt{d_k}$ is because of how the dot product and the softmax function behave. Dot products can grow large, especially with high-dimensional vectors. Large inputs can push the Softmax function into regions where its gradient is almost zero, which makes training unstable. The scaling term $\sqrt{d_k}$ (where $d_k$ is the dimension of $K$) mitigates this issue by ensuring the input to the softmax function is not extremely large.
 
-### Output Contextual Vectors (Weighted Sum with $V$)
 
-So far, we've calculated who each token should pay attention to. The attention weights tell us the importance of other tokens. Now, we need to use these weights to combine the substance of those tokens. While the Query and Key vectors are used to establish relationships, the Value vector $V$ contains the actual information of a token that we want to aggregate.
+#### Attention Scores
+What we've computed so far, $softmax\left(\frac{QK^T}{\sqrt{d_k}}\right)$, gives us the **attention scores** in the form of a square matrix of size $N{\times}N$, where $N$ is the sequence length, and each entry in the matrix represents how much attention token $i$ should pay to token $j$, i.e., how relevant token $j$ is to token $i$ in this particular sentence.
 
-The final step is to multiply our attention weights by their corresponding Value vectors and sum them up. This is a **weighted average**.
+<div class="row mt-3" style="max-width: 50%; height: auto; margin: 0 auto;">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/attention-matrix.png" class="img-fluid rounded z-depth-1" %}
+    </div>
+</div>
+<div class="caption">
+<b>Figure 9</b>: Attention scores for an input sequence "Hello I love you". (<a href="https://theaisummer.com/attention/">Source</a>)
+</div>
+
+#### Final Step: Computing the Contextual Vectors
+
+Now the only thing left is to multiply the attention scores by $V$, which contains the actual information of a token that we want to aggregate (remember, $V$ -> What do I represent?):
 
 $$Z_i = \sum_{j} \text{Attention}(i, j) \cdot V_j$$
 
-Note that $Z_i$, the final output vector for token $i$, is composed of all the $V_j$ vectors for every token $j$ in the sequence, weighted by how much they are important to token $i$.
+Note that $Z_i$, the contextual embedding for token $i$, is composed of all the $V_j$ vectors for every token $j$ in the sequence, weighted by how much they are important to token $i$.
 
 ### (Optional) Self-Attention as a Soft Hash Table
-If the attention mechanism is already clear by this point, this section can be skipped.
-
 
 Another good example to build intuition for how the Self-Attention mechanism works is to compare it with the concept of a lookup table / hash table / dictionary.
 
@@ -382,6 +399,23 @@ contextual_vector = [
 
 # this now represents the token that is associated with the query "husky"
 ```
+
+### Encoder vs. Decoder Layer
+While discussing Self-Attention, it's important to clarify the difference between how it operates in the encoder and decoder layers of the original Transformer architecture.
+
+The Transformer was introduced with two main components: the **encoder** and the **decoder**. The encoder processes the input sequence and learns a contextual representation, while the decoder generates the output sequence, conditioned on the encoder's output. This separation allows the model to handle tasks such as machine translation, where the input and output sequences may differ in length and content.
+
+- **Encoder:** Maps input tokens (e.g., in language $x$) into meaningful numerical features using self-attention. In the encoder, self-attention is **bidirectional**, meaning each token can attend to all other tokens in the sequence, regardless of their position (i.e., the way we've learned so far).
+- **Decoder:** Uses these features to generate output tokens (e.g., in language $y$). In the decoder, self-attention is **masked**. Each token can only attend to previous tokens and itself, preventing access to future tokens during generation.
+
+The decoder is important for generative tasks such as next token prediction. Given a sentence "The cat is chasing the", we want to predict the token "mouse". Note that, if we simply use the unmasked self-attention, we 
+
+Without masking, the decoder could cheat by attending to words th, which would make training unrealistic and hurt performance during actual sequence generation (like translation or text completion). Masking enforces the left-to-right, autoregressive nature of generation, making predictions fair and usable in real-world tasks.
+
+
+This separation is not required for all tasks. Some transformer variants use only the encoder (e.g., BERT for classification) or only the decoder (e.g., GPT for text generation), depending on the application.
+
+
 
 ### Masked Self-Attention
 Another important consideration is that the self-attention mechanism is slightly different in the encoder and in the decoder:
