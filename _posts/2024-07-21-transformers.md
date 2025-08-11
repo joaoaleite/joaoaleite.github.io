@@ -830,11 +830,10 @@ In this post I've only discussed the decoder-only transformer architecture. A br
 
 ## Encoder-Decoder (suitable for seq2seq tasks)
 - Suitable for sequence-to-sequence tasks such as machine translation, text summarisation, image captioning.
-- Encoder-Decoder models have the advantage of **bidirectionality** when calculating the attention scores. In other words, we don't apply the masking step described previously, allowing tokens from time step t attend to **ALL** tokens (from past and future time steps) instead of only the past tokens.
-- In general terms, the model is allowed to process the entire sequence first, and then it will generate the output tokens, as opposed to looking at previous tokens and predicting the current token.
-- However, these advantages come with the downside of higher computational cost and complexity. Moreover, research found that other variations are more suitable for tasks where this bidirectionality is not needed.
+- Encoder-Decoder models have the advantage of **bidirectionality** when calculating the attention scores. In other words, the encoder's MHA is not masked, allowing tokens from time any step to attend to **ALL** tokens (from past and future time steps) instead of only the past tokens as in the decoder.
+- In general terms, the model is allowed to process the input entire sequence first (e.g., such as a sentence in English), and then it will generate the output tokens (e.g., such as a translation of the input sentence to German) one token at a time.
 - Examples of Encoder-Decoder models: BART, T5, T0
-- One important implementation detail about encoder-decoder architectures that was not mentioned previously, is that the second MHA layer in the decoder takes the Key and the Value outputs from the encoder as input, while the Query comes from the Masked MHA from the encoder (refer to the first figure).
+- One important implementation detail about encoder-decoder architectures that was not mentioned previously, is that the second MHA layer in the decoder takes the Key and the Value outputs from the encoder as input, while the Query comes from the Masked MHA from the decoder (refer to the first figure).
 
 ## Encoder-only (suitable for input understanding tasks e.g. classification)
 - Encoder-only architectures are suitable for classification tasks, since we don't want to map the input sequence to another sequence, but rather map the input sequence to a pre-defined set of labels. Therefore, we only need to encode, i.e., learn how to represent the sequence in latent space, and then append a classification head on top to discriminate between the classes. Common tasks using encoder-only models include: text classification, named entity recognition (NER), question answering (with extractive approaches), document embeddings.
@@ -842,6 +841,6 @@ In this post I've only discussed the decoder-only transformer architecture. A br
 - Examples of encoder-only models: BERT, RoBERTa, DeBERTa
 
 ## Decoder-only (suitable for generative tasks)
-- Decoder-only architectures are suitable for generative tasks, since these settings are naturally autoregressive (dependant on previous context, not on future context).
-- Generative tasks using decoder-only models include: language modelling, text generation, dialogue systems, text autocompletion.
+- Decoder-only architectures are suitable for generative tasks, since these settings are naturally autoregressive (dependant on previous context).
+- Tasks suitable for decoder-only models include: language modelling, text generation, dialogue systems, text autocompletion.
 - Examples of decoder-only models: XLNeT, GPT-3, ChatGPT, LLaMa.
