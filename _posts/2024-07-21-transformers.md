@@ -342,7 +342,7 @@ Note that $Z_i$, the contextual embedding for token $i$, is composed of all the 
 
 Another good example to build intuition for how the Self-Attention mechanism works is to compare it with the concept of a lookup table / hash table / dictionary.
 
-In a python dictionary, a query will either match entirely with an existing key (and then return it's value), or it will not match at all with any of the keys (and then return an error or a predefined value):
+In a python dictionary, a query will either match entirely with an existing key (and then return its value), or it will not match at all with any of the keys (and then return an error or a predefined value):
 
 ```python
 d = {
@@ -629,7 +629,7 @@ Residual connections were introduced by He et al. (2015) <d-cite key="he-2016-de
 
 When updating weights, the gradients are multiplied by the weights of each layer. If these weights are small (i.e., close to zero), the gradients shrink as they propagate backward through many layers, eventually approaching zero, which makes earlier layers effectively stop learning.
 
-Residual connections help mitigate this problem by allowing gradients to bypass layers, preserving their magnitude. This is done simply by summing the input of a given layer with it's output. 
+Residual connections help mitigate this problem by allowing gradients to bypass layers, preserving their magnitude. This is done simply by summing the input of a given layer with its output. 
 
 <div class="row mt-3" style="max-width: 80%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
