@@ -188,8 +188,7 @@ class EmbeddingLayer(nn.Module):
         self.word_embedding_layer = nn.Embedding(vocab_size, embedding_dim)
         self.positional_encoding_layer = nn.Embedding(context_length, embedding_dim)
 
-        self.context_length = context_length
-        self.register_buffer("positions", torch.arange(self.context_length))
+        self.register_buffer("positions", torch.arange(context_length))
 
     def forward(self, x):
         word_emb = self.word_embedding_layer(x)
