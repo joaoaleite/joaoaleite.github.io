@@ -57,7 +57,7 @@ The transformer is a sequence-to-sequence neural architecture that revolutionize
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/transformer-block.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/transformer-block.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -95,7 +95,7 @@ RNNs process sequences step-by-step, one token at a time. At each time step, the
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/rnn.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/rnn.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -106,7 +106,7 @@ Other variations of RNNs attempt to mitigate this issue. For example, Gated Recu
 
 <div class="row mt-3" style="max-width: 50%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/gru.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/gru.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -122,7 +122,7 @@ The core component powering the transformer architecture is the **Self-Attention
 
 <div class="row mt-3" style="max-width: 50%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/token-attention.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/token-attention.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -149,7 +149,7 @@ Unstructured inputs such as text or images must be converted into numerical repr
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/word-embeddings.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/word-embeddings.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -167,7 +167,7 @@ To address this, we introduce positional encodings that explicitly encode the or
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/positional-embeddings.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/positional-embeddings.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -228,7 +228,7 @@ We define three weight matrices (i.e., linear layers): Key ($W_K$), Query ($W_Q$
 
 <div class="row mt-3" style="max-width: 80%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/attention-query-key-value.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/attention-query-key-value.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -304,7 +304,7 @@ The Softmax function transforms the raw attention scores (ranging from $-\infty$
 
 <div class="row mt-3" style="max-width: 80%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/attention-softmax.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/attention-softmax.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -323,7 +323,7 @@ What we've computed so far, $softmax\left(\frac{QK^T}{\sqrt{d_k}}\right)$, gives
 
 <div class="row mt-3" style="max-width: 50%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/attention-matrix.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/attention-matrix.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -404,7 +404,7 @@ To "blind" the model from accessing future tokens, we use **masked self-attentio
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/attention-mask.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/attention-mask.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -476,7 +476,7 @@ The practical difference between a single self-attention unit and MHA lies in ho
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/attention-mha.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/attention-mha.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -536,7 +536,7 @@ This consists of two linear layers that perform an up projection followed by a d
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/mlp.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/mlp.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -572,7 +572,7 @@ Layer normalization addresses this issue by normalizing the outputs of the layer
 
 <div class="row mt-3" style="max-width: 70%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/attention-covariate-shift.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/attention-covariate-shift.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -633,7 +633,7 @@ Residual connections help mitigate this problem by allowing gradients to bypass 
 
 <div class="row mt-3" style="max-width: 80%; height: auto; margin: 0 auto;">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/residual-connection.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/residual-connection.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -821,7 +821,7 @@ In this post I've only discussed the decoder-only transformer architecture. A br
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/blogposts/llm-evolutionary-tree.png" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/blogposts/2024-07-21-transformers/llm-evolutionary-tree.png" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
