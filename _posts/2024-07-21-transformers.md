@@ -661,6 +661,21 @@ class GenericLayer(nn.Module):
 Check this [google collab](https://colab.research.google.com/drive/1VgnBUECZm0ylq5Cx6D9uT4Lep0gWYi7R?usp=sharing) to test the architecture with a practical example borrowed from [Andrej Karpathy's lecture series](https://youtu.be/kCc8FmEb1nY).
 
 ```python
+class EmbeddingLayer(nn.Module):
+    def __init__(self, vocab_size, embedding_dim, context_length):
+        super().__init__()
+        self.word_embedding_layer = nn.Embedding(vocab_size, embedding_dim)
+        self.positional_encoding_layer = nn.Embedding(context_length, embedding_dim)
+
+        self.context_length = context_length
+        self.register_buffer("positions", torch.arange(self.context_length))
+
+    def forward(self, x):
+        word_emb = self.word_embedding_layer(x)
+        pos_emb = self.positional_encoding_layer(self.positions)
+
+        return word_emb + pos_emb
+
 class AttentionHeadLayer(nn.Module):
     def __init__(self, embedding_dim, head_size, context_window):
         super().__init__()
