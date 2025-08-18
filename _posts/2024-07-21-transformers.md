@@ -61,7 +61,7 @@ The transformer is a sequence-to-sequence neural architecture that revolutionize
     </div>
 </div>
 <div class="caption">
-    <b>Figure 1:</b> Overview of the Transformer Architecture 
+    <b>Figure 1.</b> Overview of the Transformer Architecture 
     (<a href="https://pub.aimind.so/summary-of-transformer-achitecture-c2cef6dcaca6">Source</a>).
 </div>
 
@@ -99,7 +99,7 @@ RNNs process sequences step-by-step, one token at a time. At each time step, the
     </div>
 </div>
 <div class="caption">
-    <b>Figure 2:</b> Recurrent Neural Network (RNN): At each time step $t$, the RNN receives an input token $x_t$ along with a state vector $h_{t-1}$, and produces an output token $o_t$ as well as an updated state vector $h_t$. This recurrent process allows the model to maintain contextual information across the sequence. Source: Raj, Dinesh Samuel Sathia et al. <d-cite key="raj-2019-analysis"></d-cite>
+    <b>Figure 2.</b> Recurrent Neural Network (RNN): At each time step $t$, the RNN receives an input token $x_t$ along with a state vector $h_{t-1}$, and produces an output token $o_t$ as well as an updated state vector $h_t$. This recurrent process allows the model to maintain contextual information across the sequence. Source: Raj, Dinesh Samuel Sathia et al. <d-cite key="raj-2019-analysis"></d-cite>
 </div>
 
 Other variations of RNNs attempt to mitigate this issue. For example, Gated Recurrent Units (GRUs) <d-cite key="chung-etal-2014-empirical"></d-cite> use gating mechanisms to control the flow of information by deciding when and how much to update the state vector at each time step. This enables the model to retain relevant context over longer sequences by allowing it to ignore less important states.
@@ -110,7 +110,7 @@ Other variations of RNNs attempt to mitigate this issue. For example, Gated Recu
     </div>
 </div>
 <div class="caption">
-<b>Figure 3:</b> Gated Recurrent Units (GRUs): The update gate $z$ determines how much of the previous hidden state $h_{t-1}$ is carried forward versus how much is updated with the new candidate hidden state $\tilde{h}_t$. The reset gate $r$ controls how much of the previous hidden state is ignored when computing the candidate hidden state. Source: Cho, Kyunghyun, et al. <d-cite key="cho-etal-2014-learning"></d-cite>
+<b>Figure 3.</b> Gated Recurrent Units (GRUs): The update gate $z$ determines how much of the previous hidden state $h_{t-1}$ is carried forward versus how much is updated with the new candidate hidden state $\tilde{h}_t$. The reset gate $r$ controls how much of the previous hidden state is ignored when computing the candidate hidden state. Source: Cho, Kyunghyun, et al. <d-cite key="cho-etal-2014-learning"></d-cite>
 </div>
 Although these mechanisms help, the fundamental architectural issues associated with sequential processing still persist:
 
@@ -126,7 +126,7 @@ The core component powering the transformer architecture is the **Self-Attention
     </div>
 </div>
 <div class="caption">
-<b>Figure 4:</b> The token "it" attends to all other tokens in the sequence simultaneously. Attenion scores between the token "it" and the tokens "The", "monkey", "that", "banana", "it" are high. Source: Huiqiang Xie, Zhijin Qin, Geoffrey Li (2021). <d-cite key="xie_deep_learning_semantic"></d-cite>
+<b>Figure 4.</b> The token "it" attends to all other tokens in the sequence simultaneously. Attenion scores between the token "it" and the tokens "The", "monkey", "that", "banana", "it" are high. Source: Huiqiang Xie, Zhijin Qin, Geoffrey Li (2021). <d-cite key="xie_deep_learning_semantic"></d-cite>
 </div>
 
 Additionally, because attention is computed in parallel across the entire sequence using highly efficient matrix operations, modern hardware such as GPUs and TPUs can be leveraged to greatly accelerate both training and inference, enabling training larger models on bigger datasets.
@@ -153,7 +153,7 @@ Unstructured inputs such as text or images must be converted into numerical repr
     </div>
 </div>
 <div class="caption">
-<b>Figure 5:</b> Word Embeddings (<a href="https://arize.com/blog-course/embeddings-meaning-examples-and-how-to-compute/">Source</a>).
+<b>Figure 5.</b> Word Embeddings (<a href="https://arize.com/blog-course/embeddings-meaning-examples-and-how-to-compute/">Source</a>).
 </div>
 
 With transformers, input tokens are mapped into dense vectors using an **embedding layer**. The embedding matrix is initialized randomly with shape (<i>vocabulary_size</i>, <i>embedding_dimension</i>) and is learned jointly with the rest of the model during training. Each input token retrieves its corresponding embedding from this table, providing a continuous vector representation that captures semantic properties of the token.
@@ -171,7 +171,7 @@ To address this, we introduce positional encodings that explicitly encode the or
     </div>
 </div>
 <div class="caption">
-<b>Figure 6:</b> Sinusoidal positional encodings (<a href="https://towardsdatascience.com/understanding-positional-encoding-in-transformers-dc6bafc021ab">Source</a>).
+<b>Figure 6.</b> Sinusoidal positional encodings (<a href="https://towardsdatascience.com/understanding-positional-encoding-in-transformers-dc6bafc021ab">Source</a>).
 </div>
 
 The final input to the transformer block is the element-wise sum of the word embeddings and the positional encodings, allowing the model to capture both semantic meaning and positional information.
@@ -232,7 +232,7 @@ We define three weight matrices (i.e., linear layers): Key ($W_K$), Query ($W_Q$
     </div>
 </div>
 <div class="caption">
-<b>Figure 7:</b> Keys, Queries, and Values: Three randomly initialized matrices multiply the input embedding to obtain the Keys, Queries, and Values for that particular input sequence (<a href="https://epichka.com/blog/2023/qkv-transformer/">Source</a>).
+<b>Figure 7.</b> Keys, Queries, and Values: Three randomly initialized matrices multiply the input embedding to obtain the Keys, Queries, and Values for that particular input sequence (<a href="https://epichka.com/blog/2023/qkv-transformer/">Source</a>).
 </div>
 
 Now to obtain the contextual embeddings, we apply the following equation:
@@ -308,7 +308,7 @@ The Softmax function transforms the raw attention scores (ranging from $-\infty$
     </div>
 </div>
 <div class="caption">
-<b>Figure 8:</b> Softmax (<a href="https://www.mdpi.com/2076-3417/13/23/12784">Source</a>).
+<b>Figure 8.</b> Softmax (<a href="https://www.mdpi.com/2076-3417/13/23/12784">Source</a>).
 </div>
 
 Note that the softmax functions does exactly what its name suggests: a soft version of a max function. With a max function, we would get a $1$ for the largest element in the sequence, and $0$ for everything else. With softmax, we want the highest values to accumulate most of the probability mass, with smaller values being close to $0$.
@@ -408,7 +408,7 @@ To "blind" the model from accessing future tokens, we use **masked self-attentio
     </div>
 </div>
 <div class="caption">
-<b>Figure 6:</b> Attention Matrix Masking (<a href="https://krypticmouse.hashnode.dev/attention-is-all-you-need">Source</a>).
+<b>Figure 6.</b> Attention Matrix Masking (<a href="https://krypticmouse.hashnode.dev/attention-is-all-you-need">Source</a>).
 </div>
 
 We'll revisit the details of **encoder** and **decoder** blocks later, but for now, note that masked self-attention is only used in the **decoder**.
@@ -480,7 +480,7 @@ The practical difference between a single self-attention unit and MHA lies in ho
     </div>
 </div>
 <div class="caption">
-<b>Figure 7:</b> Multi-Head Self-Attention (MHA): Input sequence "I am a student" is processed through $4$ SA units with <i>embedding_dim</i> equals $2$. The attention values $a_0, a_1, a_2, a_3$ are concatenated to form the output with <i>embedding_dim</i> equals $8$ (<a href="https://velog.io/@joongwon00/딥러닝을-이용한-단백질-구조-예측-1.ProteinStructurePrediction">Source</a>).
+<b>Figure 7.</b> Multi-Head Self-Attention (MHA): Input sequence "I am a student" is processed through $4$ SA units with <i>embedding_dim</i> equals $2$. The attention values $a_0, a_1, a_2, a_3$ are concatenated to form the output with <i>embedding_dim</i> equals $8$ (<a href="https://velog.io/@joongwon00/딥러닝을-이용한-단백질-구조-예측-1.ProteinStructurePrediction">Source</a>).
 </div>
 
 To ensure that the features from different heads are not confined to specific sections of the concatenated vector, this combined output is passed through a linear layer. This enables the model to learn how to combine the diverse information captured by each attention head, creating a more cohesive representation.
@@ -540,7 +540,7 @@ This consists of two linear layers that perform an up projection followed by a d
     </div>
 </div>
 <div class="caption">
-<b>Figure 8:</b> Point-Wise Feed Forward Network: Input gets up projected from $3$ to $4$ dimensions, then down projected back from $4$ to $3$ dimensions. Source: Garg, Siddhant & Ramakrishnan, Goutham. (2020) <d-cite key="garg-ramakrishnan-2020-advances"></d-cite>.
+<b>Figure 8.</b> Point-Wise Feed Forward Network: Input gets up projected from $3$ to $4$ dimensions, then down projected back from $4$ to $3$ dimensions. Source: Garg, Siddhant & Ramakrishnan, Goutham. (2020) <d-cite key="garg-ramakrishnan-2020-advances"></d-cite>.
 </div>
 
 ### Implementation
@@ -576,7 +576,7 @@ Layer normalization addresses this issue by normalizing the outputs of the layer
     </div>
 </div>
 <div class="caption">
-<b>Figure 9:</b> Before layer normalization, the activations exhibit significantly varying distributions. After normalization, the distributions are aligned and much closer to each other (<a href="https://e2eml.school/batch_normalization">Source</a>).
+<b>Figure 9.</b> Before layer normalization, the activations exhibit significantly varying distributions. After normalization, the distributions are aligned and much closer to each other (<a href="https://e2eml.school/batch_normalization">Source</a>).
 </div>
 
 To normalize the input features, we scale them as follows:
