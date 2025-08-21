@@ -1,12 +1,13 @@
 ---
 layout: distill
 title: Transformers
-description: Notes on the Transformer architecture.
-tags: study nlp
+description:
+tags: study deep-learning llm implementation
 giscus_comments: false
 date: 2024-07-21
 featured: true
 
+thumbnail: assets/img/blogposts/2024-07-21-transformers/transformers.png
 authors:
   - name: João Leite
     url: "https://jaleite.com"
