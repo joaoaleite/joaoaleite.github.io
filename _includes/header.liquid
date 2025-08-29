@@ -31,10 +31,6 @@
         data-toggle="collapse"
         data-target="#navbarNav"
         aria-controls="navbarNav"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
-      >
-        <span class="sr-only">Toggle navigation</span>
         <span class="icon-bar top-bar"></span>
         <span class="icon-bar middle-bar"></span>
         <span class="icon-bar bottom-bar"></span>
@@ -56,10 +52,11 @@
             </a>
           </li>
 
+
           <!-- Other pages -->
           {% assign sorted_pages = site.pages | sort: 'nav_order' %}
           {% for p in sorted_pages %}
-            {% if p.nav and p.autogen == null %}
+            {% if p.nav and p.autogen == null and p.title != 'cv' and p.title != 'CV' %}
               {% if p.dropdown %}
                 {% assign has_active_child = false %}
                 {% for child in p.children %}
@@ -108,6 +105,10 @@
               {% endif %}
             {% endif %}
           {% endfor %}
+          <!-- CV direct PDF link (before search) -->
+          <li class="nav-item">
+            <a class="nav-link" href="/assets/pdf/resume.pdf" target="_blank">resume</a>
+          </li>
           {% if site.search_enabled %}
             <!-- Search -->
             <li class="nav-item">
