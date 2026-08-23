@@ -343,7 +343,7 @@ footer {
     height: 100%;
     object-fit: cover;
     object-position: 50% 72%;
-    transform: scale(1.65);
+    transform: scale(1.85);
     transform-origin: 50% 72%;
   }
 }
