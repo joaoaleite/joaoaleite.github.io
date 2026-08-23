@@ -17,6 +17,6 @@ social: true
 
 <div class="about-content">
   <p>
-    I develop methods to evaluate and improve the safety and reliability of language models, with a focus on factuality, automated content verification, red teaming, and adversarial robustness.
+    I develop methods to evaluate and improve the safety and reliability of language models.
   </p>
 </div>
