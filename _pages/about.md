@@ -17,6 +17,6 @@ social: true
 
 <div class="about-content">
   <p>
-    I work on AI Safety and Responsible AI in NLP including automatic content verification, factuality, LLM evaluations, LLM red teaming, adversarial attacks.
+    I develop methods to evaluate and improve the safety and reliability of language models, with a focus on factuality, automated content verification, red teaming, and adversarial robustness.
   </p>
 </div>
