@@ -6,7 +6,7 @@ title: blank # the website title (if blank, full name will be used instead)
 first_name: João
 middle_name: A.
 last_name: Leite
-email: j.leite@sheffield.ac.uk
+email: joaoleite@microsoft.com
 description: > # the ">" symbol means to ignore newlines until "footer_text:"
 footer_text: 
 keywords: AI, Machine Learning, Natural Language Processing # add your own keywords or leave empty
@@ -103,7 +103,7 @@ wechat_qr: # filename of your wechat qr-code saved as an image (e.g., wechat-qr.
 whatsapp_number: # your WhatsApp number (full phone number in international format. Omit any zeroes, brackets, or dashes when adding the phone number in international format.)
 wikidata_id: # your wikidata id
 wikipedia_id: # your wikipedia id (Case sensitive)
-work_url: https://www.sheffield.ac.uk/cs/people/research-staff/joao-leite # work page URL
+work_url: # work page URL
 x_username: # your X handle
 youtube_id: # your youtube channel id (youtube.com/@<youtube_id>)
 zotero_username: # your zotero username
