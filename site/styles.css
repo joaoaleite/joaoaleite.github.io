@@ -342,9 +342,9 @@ footer {
   .portrait {
     height: 100%;
     object-fit: cover;
-    object-position: 50% 62%;
+    object-position: 50% 72%;
     transform: scale(1.65);
-    transform-origin: 50% 62%;
+    transform-origin: 50% 72%;
   }
 }
 
