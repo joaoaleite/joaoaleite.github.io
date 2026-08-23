@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-I have joined [Microsoft](https://www.microsoft.com/) as a Senior Applied Scientist.
+Joined [Microsoft](https://www.microsoft.com/) as a Senior Applied Scientist.

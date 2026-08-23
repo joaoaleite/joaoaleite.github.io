@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-Leading an in-house research hackathon project alongside four invited researchers.
+Led an in-house research hackathon project alongside four invited researchers.

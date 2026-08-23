@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-I graduated with a PhD from the University of Sheffield.
+Graduated with a PhD from the University of Sheffield.
