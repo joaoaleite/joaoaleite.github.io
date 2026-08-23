@@ -38,7 +38,6 @@ jobs:
           mkdir -p dist/assets
           cp -R site/. dist/
           cp -R assets/img dist/assets/
-          cp -R assets/pdf dist/assets/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

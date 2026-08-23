@@ -110,6 +110,12 @@ h1 {
   letter-spacing: -0.02em;
 }
 
+.profile-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
 section {
   margin-top: 68px;
 }
