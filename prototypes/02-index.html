@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>João A. Leite — Academic index</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #111;
+        --muted: #737373;
+        --rule: #c9c9c9;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #fafafa;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 15px;
+        line-height: 1.5;
+      }
+
+      .shell {
+        width: min(1120px, calc(100% - 36px));
+        margin: 0 auto;
+        padding: 34px 0 64px;
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        padding-bottom: 28px;
+        border-bottom: 1px solid var(--ink);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+      }
+
+      .intro {
+        max-width: 720px;
+      }
+
+      .intro p {
+        margin: 0 0 16px;
+      }
+
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px 18px;
+      }
+
+      a {
+        color: inherit;
+        text-underline-offset: 3px;
+      }
+
+      a:hover {
+        text-decoration-thickness: 2px;
+      }
+
+      section {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        padding: 34px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      h2 {
+        margin: 0 0 20px;
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-weight: 400;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 62px minmax(0, 1fr) 130px;
+        gap: 18px;
+        padding: 0 0 22px;
+      }
+
+      .row:last-child {
+        padding-bottom: 0;
+      }
+
+      .year,
+      .venue {
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .title {
+        margin: 0 0 5px;
+      }
+
+      .authors {
+        margin: 0;
+        color: var(--muted);
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 0.78rem;
+        line-height: 1.45;
+      }
+
+      .paper-links {
+        margin-top: 7px;
+        font-size: 0.75rem;
+      }
+
+      .paper-links a {
+        margin-right: 12px;
+      }
+
+      .news-row {
+        display: grid;
+        grid-template-columns: 110px 1fr;
+        gap: 18px;
+        margin-bottom: 13px;
+      }
+
+      .news-row time {
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .news-row p {
+        margin: 0;
+      }
+
+      footer {
+        display: flex;
+        justify-content: space-between;
+        padding-top: 16px;
+        color: var(--muted);
+        font-size: 0.7rem;
+      }
+
+      @media (max-width: 720px) {
+        header,
+        section {
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+
+        .row {
+          grid-template-columns: 48px minmax(0, 1fr);
+          gap: 12px;
+        }
+
+        .venue {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <h1>João A. Leite</h1>
+        <div class="intro">
+          <p>Senior Applied Scientist at Microsoft.</p>
+          <p>
+            I work on AI Safety and Responsible AI in NLP including automatic content
+            verification, factuality, LLM evaluations, LLM red teaming, adversarial attacks.
+          </p>
+          <nav aria-label="Profile links">
+            <a href="mailto:joaoleite@microsoft.com">email</a>
+            <a href="https://scholar.google.com/citations?user=-OhzTN4AAAAJ">scholar</a>
+            <a href="https://github.com/joaoaleite">github</a>
+            <a href="https://www.linkedin.com/in/joao-augusto-leite/">linkedin</a>
+            <a href="https://orcid.org/0000-0002-3587-853X">orcid</a>
+          </nav>
+        </div>
+      </header>
+
+      <section>
+        <h2>Research</h2>
+        <div>
+          <article class="row">
+            <div class="year">2026</div>
+            <div>
+              <p class="title">LLM-Based Adversarial Persuasion Attacks on Fact-Checking Systems</p>
+              <p class="authors">João A. Leite, Olesya Razuvayevskaya, Kalina Bontcheva, Carolina Scarton</p>
+              <div class="paper-links">
+                <a href="https://arxiv.org/abs/2601.16890">arxiv</a>
+                <a href="../assets/pdf/persuasion_injection.pdf">pdf</a>
+              </div>
+            </div>
+            <div class="venue">EMNLP</div>
+          </article>
+          <article class="row">
+            <div class="year">2025</div>
+            <div>
+              <p class="title">Weakly Supervised Veracity Classification with LLM-Predicted Credibility Signals</p>
+              <p class="authors">João A. Leite, Olesya Razuvayevskaya, Kalina Bontcheva, Carolina Scarton</p>
+              <div class="paper-links">
+                <a href="../assets/pdf/pastel.pdf">pdf</a>
+                <a href="https://epjds.epj.org/articles/epjdata/abs/2025/01/13688_2025_Article_534/13688_2025_Article_534.html">publisher</a>
+              </div>
+            </div>
+            <div class="venue">EPJ Data Science</div>
+          </article>
+          <article class="row">
+            <div class="year">2025</div>
+            <div>
+              <p class="title">A Cross-Domain Study of the Use of Persuasion Techniques in Online Disinformation</p>
+              <p class="authors">João A. Leite, Olesya Razuvayevskaya, Carolina Scarton, Kalina Bontcheva</p>
+              <div class="paper-links"><a href="../assets/pdf/www2024.pdf">pdf</a></div>
+            </div>
+            <div class="venue">WWW</div>
+          </article>
+          <article class="row">
+            <div class="year">2024</div>
+            <div>
+              <p class="title">EUvsDisinfo: A Dataset for Multilingual Detection of Pro-Kremlin Disinformation</p>
+              <p class="authors">João A. Leite, Olesya Razuvayevskaya, Kalina Bontcheva, Carolina Scarton</p>
+              <div class="paper-links">
+                <a href="../assets/pdf/euvsdisinfo_cikm.pdf">pdf</a>
+                <a href="https://doi.org/10.1145/3627673.3679167">doi</a>
+              </div>
+            </div>
+            <div class="venue">CIKM</div>
+          </article>
+          <article class="row">
+            <div class="year">2020</div>
+            <div>
+              <p class="title">Toxic Language Detection in Social Media for Brazilian Portuguese</p>
+              <p class="authors">João A. Leite, Diego Silva, Kalina Bontcheva, Carolina Scarton</p>
+              <div class="paper-links">
+                <a href="../assets/pdf/toxic_2020.pdf">pdf</a>
+                <a href="https://aclanthology.org/2020.aacl-main.91">acl anthology</a>
+              </div>
+            </div>
+            <div class="venue">AACL</div>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <h2>Updates</h2>
+        <div>
+          <article class="news-row">
+            <time datetime="2026-08-20">2026-08-20</time>
+            <p>Paper accepted to EMNLP 2026 Main Conference.</p>
+          </article>
+          <article class="news-row">
+            <time datetime="2026-08-04">2026-08-04</time>
+            <p>Joined Microsoft as a Senior Applied Scientist.</p>
+          </article>
+        </div>
+      </section>
+
+      <footer>
+        <span>João A. Leite</span>
+        <span>Last updated 2026</span>
+      </footer>
+    </div>
+  </body>
+</html>
