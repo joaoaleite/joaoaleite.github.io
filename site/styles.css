@@ -322,6 +322,27 @@ footer {
   margin: 4px 0 10px;
 }
 
+.references {
+  margin-top: 64px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.82rem;
+}
+
+.references h2 {
+  margin-top: 0;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.references li {
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
 @media (max-width: 760px) {
   .intro {
     --mobile-portrait-size: clamp(112px, 24vw, 160px);
