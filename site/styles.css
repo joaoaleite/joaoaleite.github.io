@@ -79,9 +79,13 @@ summary:focus-visible {
   margin-bottom: 76px;
 }
 
+.portrait-frame,
 .portrait {
   display: block;
   width: 100%;
+}
+
+.portrait {
   height: auto;
 }
 
@@ -312,12 +316,35 @@ footer {
 
 @media (max-width: 760px) {
   .intro {
-    grid-template-columns: 1fr;
-    gap: 40px;
+    --mobile-portrait-size: clamp(112px, 24vw, 160px);
+
+    position: relative;
+    display: block;
+  }
+
+  .intro h1 {
+    max-width: calc(100% - var(--mobile-portrait-size) - 20px);
+  }
+
+  .intro .role {
+    max-width: calc(100% - var(--mobile-portrait-size) - 20px);
+  }
+
+  .portrait-frame {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: var(--mobile-portrait-size);
+    height: var(--mobile-portrait-size);
+    overflow: hidden;
   }
 
   .portrait {
-    width: min(100%, 240px);
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 62%;
+    transform: scale(1.65);
+    transform-origin: 50% 62%;
   }
 }
 
