@@ -228,9 +228,21 @@ footer {
 .contact {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 24px;
   padding-top: 14px;
   border-top: 1px solid var(--rule);
+}
+
+.contact-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.last-updated {
+  margin: 0;
 }
 
 .article-nav {
@@ -410,6 +422,11 @@ footer {
   .intro,
   .article-nav {
     margin-bottom: 52px;
+  }
+
+  .contact {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .update {
