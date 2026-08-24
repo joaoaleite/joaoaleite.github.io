@@ -242,7 +242,8 @@ footer {
 }
 
 .last-updated {
-  margin: 0;
+  margin: 0 0 0 auto;
+  white-space: nowrap;
 }
 
 .article-nav {
@@ -338,6 +339,82 @@ footer {
   background: transparent;
 }
 
+.highlight .k,
+.highlight .o,
+.highlight .ow {
+  color: #cf222e;
+}
+
+.highlight .k {
+  font-weight: 600;
+}
+
+.highlight .nc,
+.highlight .nd,
+.highlight .nf {
+  color: #8250df;
+}
+
+.highlight .bp,
+.highlight .nb {
+  color: #953800;
+}
+
+.highlight .mf,
+.highlight .mi {
+  color: #0550ae;
+}
+
+.highlight .s,
+.highlight .sh {
+  color: #0a3069;
+}
+
+.highlight .c1 {
+  color: #6e7781;
+  font-style: italic;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #6e7781;
+  font-style: italic;
+}
+
+.token.keyword,
+.token.operator {
+  color: #cf222e;
+}
+
+.token.keyword {
+  font-weight: 600;
+}
+
+.token.class-name,
+.token.decorator,
+.token.function {
+  color: #8250df;
+}
+
+.token.boolean,
+.token.number {
+  color: #0550ae;
+}
+
+.token.builtin,
+.token.char,
+.token.string {
+  color: #0a3069;
+}
+
+.token.constant,
+.token.regex,
+.token.variable {
+  color: #953800;
+}
+
 .article-body d-contents {
   display: block;
   margin-bottom: 48px;
@@ -427,6 +504,10 @@ footer {
   .contact {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .last-updated {
+    margin-left: 0;
   }
 
   .update {
